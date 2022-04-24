@@ -1,0 +1,24 @@
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.opendb
+*.VC.db
+
+
+# other folders
+.vs/
+build/*
+bin/*
+
+!bin/Debug
+bin/Debug/*
+!bin/Debug/assimp-vc142-mtd.dll
+
+!bin/Release
+bin/Release/*
+!bin/Release/assimp-vc142-mt.dll

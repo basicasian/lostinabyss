@@ -13,6 +13,7 @@
 #include "Material.h"
 #include "Light.h"
 #include "Texture.h"
+#include "UserInterface.h"
 
 
 /* --------------------------------------------- */
@@ -36,6 +37,11 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 6.0f;
+int _timer = 300;
+boolean _gameLost = false;
+int window_width, window_height, _refresh_rate;
+GLFWmonitor* monitor;
+bool fullscreen;
 
 
 /* --------------------------------------------- */
@@ -50,14 +56,18 @@ int main(int argc, char** argv)
 
 	INIReader reader("assets/settings.ini");
 
-	int window_width = reader.GetInteger("window", "width", 800);
-	int window_height = reader.GetInteger("window", "height", 800);
-	int refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	bool fullscreen = reader.GetBoolean("window", "fullscreen", false);
-	std::string window_title = reader.Get("window", "title", "ECG 2021");
+	window_width = reader.GetInteger("window", "width", 800);
+	window_height = reader.GetInteger("window", "height", 800);
+	_refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
+	float _brightness = reader.GetInteger("window", "brightness", 1);
+	fullscreen = reader.GetBoolean("window", "fullscreen", false);
+	std::string window_title = reader.Get("window", "title", "Lost in Abyss");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
 	float farZ = float(reader.GetReal("camera", "far", 100.0f));
+	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
+
+	std::shared_ptr<UserInterface> _ui;
 
 	/* --------------------------------------------- */
 	// Create context
@@ -73,14 +83,14 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Request core profile
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  // Create an OpenGL debug context 
-	glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate); // Set refresh rate
+	glfwWindowHint(GLFW_REFRESH_RATE, _refresh_rate); // Set refresh rate
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	// Enable antialiasing (4xMSAA)
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	// Open window
-	GLFWmonitor* monitor = nullptr;
+	monitor = nullptr;
 
 	if (fullscreen)
 		monitor = glfwGetPrimaryMonitor();
@@ -131,6 +141,8 @@ int main(int argc, char** argv)
 	glClearColor(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 	/* --------------------------------------------- */
@@ -139,10 +151,21 @@ int main(int argc, char** argv)
 	{
 		// Load shader(s)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
+		std::shared_ptr<Shader> skyboxShader = std::make_shared<Shader>("skybox.vert", "skybox.frag");
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
+		std::vector<std::string> files
+		{
+			"assets/textures/skybox/back.jpg",
+			"assets/textures/skybox/bottom.jpg",
+			"assets/textures/skybox/front.jpg",
+			"assets/textures/skybox/left.jpg",
+			"assets/textures/skybox/right.jpg",
+			"assets/textures/skybox/top.jpg",
+		};
+
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
@@ -153,6 +176,7 @@ int main(int argc, char** argv)
 		Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
 		Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
 
+
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
@@ -160,11 +184,17 @@ int main(int argc, char** argv)
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
 		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
 
+		// Initialize user interface/HUD
+		_ui = std::make_shared<UserInterface>("userinterface.vert", "userinterface.frag", window_width, window_height, _brightness, _fontpath);
+
 		// Render loop
-		float t = float(glfwGetTime());
+		float lastT = float(glfwGetTime());
 		float dt = 0.0f;
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
+		int fpsCounter = 0;
+		double lastTime = glfwGetTime();
+		int fps = 0;
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -185,11 +215,18 @@ int main(int argc, char** argv)
 			cylinder.draw();
 			sphere.draw();
 
-			// Compute frame time
-			dt = t;
-			t = float(glfwGetTime());
-			dt = t - dt;
-			t_sum += dt;
+			double t = glfwGetTime();
+			double dt = t - lastT;
+			if ((int)floor(lastT) != (int)floor(t)) {
+				fps = fpsCounter;
+				fpsCounter = 0;
+			}
+			fpsCounter++;
+
+			lastT = t;
+
+			// draw user interface
+			_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
 
 			// Swap buffers
 			glfwSwapBuffers(window);
@@ -250,6 +287,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
 	// F1 - Wireframe
 	// F2 - Culling
+	// F11 - Fullscreen toggle
 	// Esc - Exit
 
 	if (action != GLFW_RELEASE) return;
@@ -267,6 +305,17 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			_culling = !_culling;
 			if (_culling) glEnable(GL_CULL_FACE);
 			else glDisable(GL_CULL_FACE);
+			break;
+		case GLFW_KEY_F11:
+
+			// glfwGetWindowMonitor(window) returns NULL if windowed
+			if (glfwGetWindowMonitor(window) == nullptr) {
+				glfwSetWindowMonitor(window, monitor, 0, 0, window_width, window_height, _refresh_rate);
+			}
+			else {
+				glfwSetWindowMonitor(window, nullptr, 0, 0, window_width, window_height, _refresh_rate);
+			}
+
 			break;
 	}
 }
