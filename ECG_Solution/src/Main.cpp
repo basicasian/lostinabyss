@@ -176,15 +176,15 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 
 		// Create geometry
-		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f), woodTextureMaterial);
-		//Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
-		//Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
-		Geometry mainPlatform = Geometry(glm::mat4(1.0f), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
+		Geometry mainPlatform = Geometry(glm::mat4(1.0f), Geometry::createCubeGeometry(1.5f, 0.25f, 1.5f), woodTextureMaterial);
+		BulletBody btPlatform = BulletBody(btTag, Geometry::createCubeGeometry(1.5f, 0.25f, 1.5f), 0.0f, true, glm::vec3(0.0f, 0.0f, 0.0f), bulletWorld._world);
 
-		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-		//ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		ModelLoader scene = ModelLoader("assets/objects/scene.obj", catModel, catModelMaterial);
-		BulletBody btScene = BulletBody(btTag, scene.getMeshes(), 0.0f, true, glm::vec3(0.0f, 2.0f, 0.0f), bulletWorld._world);
+
+		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+		ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		BulletBody btCat = BulletBody(btPlayer, cat.getMeshes(), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
+		//ModelLoader scene = ModelLoader("assets/objects/scene.obj",  glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f), catModelMaterial);
+		//BulletBody btScene = BulletBody(btTag, scene.getMeshes(), 0.0f, true, glm::vec3(0.0f, 0.0f, 0.0f), bulletWorld._world);
 
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 		pointLights.push_back(pointL1);
 		pointLights.push_back(pointL2);
 		pointLights.push_back(pointL3);
-
+#pragma endregion
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -249,8 +249,10 @@ int main(int argc, char** argv)
 			//cylinder.draw();
 			//sphere.draw();
 
-			scene.Draw();
-			scene.SetModelMatrix(glm::translate(glm::mat4(1.0f), btScene.getPosition()));
+			//scene.Draw();
+			cat.Draw();
+			//scene.SetModelMatrix(glm::translate(glm::mat4(1.0f), glm::vec3(btScene.getPosition().x, btScene.getPosition().y, btScene.getPosition().z)));
+			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), glm::vec3(btCat.getPosition().x, btCat.getPosition().y, btCat.getPosition().z)));
 
 			//calculate lightSpaceMatrix for shadow mapping 
 			//lightSpaceMatrix "T" to calculate the matrix transformation for the lights beam
@@ -285,6 +287,8 @@ int main(int argc, char** argv)
 
 			// Swap buffers
 			glfwSwapBuffers(window);
+
+
 		}
 	}
 
@@ -304,20 +308,6 @@ int main(int argc, char** argv)
 
 	return EXIT_SUCCESS;
 }
-
-/*
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL)
-{
-	shader->use();
-	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	shader->setUniform("camera_world", camera.getPosition());
-
-	shader->setUniform("dirL.color", dirL.color);
-	shader->setUniform("dirL.direction", dirL.direction);
-	shader->setUniform("pointL.color", pointL.color);
-	shader->setUniform("pointL.position", pointL.position);
-	shader->setUniform("pointL.attenuation", pointL.attenuation);
-}*/
 
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
 {

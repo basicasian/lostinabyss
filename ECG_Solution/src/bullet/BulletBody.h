@@ -6,18 +6,11 @@
 #include "../Mesh.h"
 #include "../Camera.h"
 #include "../Utils.h"
+#include "../Geometry.h"
 
 
-// no semicolons after #define statement!
 #define btTag      1
-
-enum Bullet_Movement {
-	FORWARD_B,
-	BACKWARD_B,
-	LEFT_B,
-	RIGHT_B,
-	UP_B,
-};
+#define btPlayer   2
 
 /*!
  * Physics Node Implementation based on Bullet
@@ -55,6 +48,12 @@ class BulletBody
 	std::vector<Mesh> _data;
 
 	/*!
+	*  data of geometry shape
+	*/
+	GeometryData _geoData;
+
+
+	/*!
 	*  position of this bullet object
 	*/
 	glm::vec3 _position;
@@ -63,7 +62,6 @@ class BulletBody
 	*  specifiy the type of bullet body for collision detection
 	*/
 	int _tag;
-
 
 	/*!
 	*  if body is hit
@@ -83,6 +81,19 @@ public:
 	* @param dynamics_world: to add the bodies to the world
 	*/
 	BulletBody(int tag, std::vector<Mesh> data, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world);
+
+	/*!
+	* constructor
+	* @param tag: to specifiy the bullet object
+	* @param data: shape data from geometry
+	* @param width, height, depth: size of the cube simplifiation
+	* @param mass: mass of the body
+	* @param convex: if the shape is convec
+	* @param position: of the body
+	* @param camera: to get the pitch and yaw // REMOVED
+	* @param dynamics_world: to add the bodies to the world
+	*/
+	BulletBody(int tag, GeometryData geoData, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world);
 
 	/*!
 	 * Creates Shape with vertices
@@ -109,11 +120,6 @@ public:
 	 * get position
 	 */
 	glm::vec3 getPosition();
-
-	/*!
-	 * get front vector
-	 */
-	glm::vec3 getFrontVector();
 
 	/*!
 	 * get tag

@@ -5,6 +5,7 @@
     <ClCompile Include="src\bullet\BulletWorld.cpp" />
     <ClCompile Include="src\ModelLoader.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\NewCamera.cpp" />
     <ClCompile Include="src\UserInterface.cpp" />
     <ClInclude Include="src\bullet\BulletBody.h" />
     <ClInclude Include="src\bullet\BulletWorld.h" />
@@ -18,6 +19,7 @@
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\ModelLoader.h" />
     <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\NewCamera.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\UserInterface.h" />

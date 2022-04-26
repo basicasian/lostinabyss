@@ -2,12 +2,13 @@
 
 BulletWorld::BulletWorld(btVector3 gravity)
 {
-    // eliminatee objects that cannot collide
-    _broadphase = new btDbvtBroadphase();
 
     // more fine and accurate collision detection
     _collisionConfiguration = new btDefaultCollisionConfiguration();
     _dispatcher = new btCollisionDispatcher(_collisionConfiguration);
+
+    // eliminatee objects that cannot collide
+    _broadphase = new btDbvtBroadphase();
 
     // for objects to interact properly
     _solver = new btSequentialImpulseConstraintSolver();
