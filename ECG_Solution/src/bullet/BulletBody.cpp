@@ -57,12 +57,6 @@ void BulletBody::createShapeWithVertices() {
 	{
 		if (_convex) {
 
-			// allows you to add all points of the object 
-			// and uses them to automatically create the minimum convex hull
-
-			// simplification as a box, width, height and depth has to be added in parameter 
-			//_shape = new btBoxShape(btVector3(btScalar(width), btScalar(height), btScalar(depth)));
-
 			_shape = new btConvexHullShape();
 			for (int i = 0; i < _geoData.positions.size(); i++) {
 

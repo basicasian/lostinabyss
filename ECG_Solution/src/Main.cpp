@@ -82,13 +82,13 @@ int main(int argc, char** argv)
 	/* --------------------------------------------- */
 
 	glfwSetErrorCallback([](int error, const char* description) { std::cout << "GLFW error " << error << ": " << description << std::endl; });
-	
+
 	if (!glfwInit()) {
 		EXIT_WITH_ERROR("Failed to init GLFW");
 	}
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // Request OpenGL version 4.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Request core profile
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);  // Create an OpenGL debug context 
 	glfwWindowHint(GLFW_REFRESH_RATE, _refresh_rate); // Set refresh rate
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 	GLFWwindow* window = glfwCreateWindow(window_width, window_height, window_title.c_str(), monitor, nullptr);
 
 	if (!window) EXIT_WITH_ERROR("Failed to create window");
-	
+
 
 	// This function makes the context of the specified window current on the calling thread. 
 	glfwMakeContextCurrent(window);
@@ -175,16 +175,15 @@ int main(int argc, char** argv)
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 
-		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f), woodTextureMaterial);
+		// Create geometry
+		//Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f), woodTextureMaterial);
 		//Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
 		//Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
 		Geometry mainPlatform = Geometry(glm::mat4(1.0f), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
 
-		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		//ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		//BulletBody btCat = BulletBody(btPlayer, cat.getMeshes(), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
-		ModelLoader scene = ModelLoader("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		ModelLoader scene = ModelLoader("assets/objects/scene.obj", catModel, catModelMaterial);
 		BulletBody btScene = BulletBody(btTag, scene.getMeshes(), 0.0f, true, glm::vec3(0.0f, 0.0f, 0.0f), bulletWorld._world);
 
 		// Initialize camera
@@ -216,7 +215,7 @@ int main(int argc, char** argv)
 		pointLights.push_back(pointL1);
 		pointLights.push_back(pointL2);
 		pointLights.push_back(pointL3);
-#pragma endregion
+
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -246,14 +245,12 @@ int main(int argc, char** argv)
 
 			// Render
 			//cube.draw();
-			//mainPlatform.draw();
+			mainPlatform.draw();
 			//cylinder.draw();
 			//sphere.draw();
 
 			scene.Draw();
-			//cat.Draw();
-			scene.SetModelMatrix(glm::translate(glm::mat4(1.0f), glm::vec3(btScene.getPosition().x, btScene.getPosition().y, btScene.getPosition().z)));
-			//cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), glm::vec3(btCat.getPosition().x, btCat.getPosition().y, btCat.getPosition().z)));
+			scene.SetModelMatrix(glm::translate(glm::mat4(1.0f), btScene.getPosition()));
 
 			//calculate lightSpaceMatrix for shadow mapping 
 			//lightSpaceMatrix "T" to calculate the matrix transformation for the lights beam
@@ -288,8 +285,6 @@ int main(int argc, char** argv)
 
 			// Swap buffers
 			glfwSwapBuffers(window);
-
-
 		}
 	}
 
@@ -309,6 +304,20 @@ int main(int argc, char** argv)
 
 	return EXIT_SUCCESS;
 }
+
+/*
+void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL)
+{
+	shader->use();
+	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
+	shader->setUniform("camera_world", camera.getPosition());
+
+	shader->setUniform("dirL.color", dirL.color);
+	shader->setUniform("dirL.direction", dirL.direction);
+	shader->setUniform("pointL.color", pointL.color);
+	shader->setUniform("pointL.position", pointL.position);
+	shader->setUniform("pointL.attenuation", pointL.attenuation);
+}*/
 
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
 {
@@ -337,11 +346,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		_dragging = true;
-	} else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		_dragging = false;
-	} else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 		_strafing = true;
-	} else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
 		_strafing = false;
 	}
 }
@@ -362,29 +374,29 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	switch (key)
 	{
-		case GLFW_KEY_ESCAPE:
-			glfwSetWindowShouldClose(window, true);
-			break;
-		case GLFW_KEY_F1:
-			_wireframe = !_wireframe;
-			glPolygonMode(GL_FRONT_AND_BACK, _wireframe ? GL_LINE : GL_FILL);
-			break;
-		case GLFW_KEY_F2:
-			_culling = !_culling;
-			if (_culling) glEnable(GL_CULL_FACE);
-			else glDisable(GL_CULL_FACE);
-			break;
-		case GLFW_KEY_F11:
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, true);
+		break;
+	case GLFW_KEY_F1:
+		_wireframe = !_wireframe;
+		glPolygonMode(GL_FRONT_AND_BACK, _wireframe ? GL_LINE : GL_FILL);
+		break;
+	case GLFW_KEY_F2:
+		_culling = !_culling;
+		if (_culling) glEnable(GL_CULL_FACE);
+		else glDisable(GL_CULL_FACE);
+		break;
+	case GLFW_KEY_F11:
 
-			// glfwGetWindowMonitor(window) returns NULL if windowed
-			if (glfwGetWindowMonitor(window) == nullptr) {
-				glfwSetWindowMonitor(window, monitor, 0, 0, window_width, window_height, _refresh_rate);
-			}
-			else {
-				glfwSetWindowMonitor(window, nullptr, 0, 0, window_width, window_height, _refresh_rate);
-			}
+		// glfwGetWindowMonitor(window) returns NULL if windowed
+		if (glfwGetWindowMonitor(window) == nullptr) {
+			glfwSetWindowMonitor(window, monitor, 0, 0, window_width, window_height, _refresh_rate);
+		}
+		else {
+			glfwSetWindowMonitor(window, nullptr, 0, 0, window_width, window_height, _refresh_rate);
+		}
 
-			break;
+		break;
 	}
 }
 
