@@ -14,6 +14,8 @@
 #include "Light.h"
 #include "Texture.h"
 #include "UserInterface.h"
+#include "ModelLoader.h"
+#include <bullet/btBulletDynamicsCommon.h>
 
 
 /* --------------------------------------------- */
@@ -151,30 +153,32 @@ int main(int argc, char** argv)
 	{
 		// Load shader(s)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
-		std::shared_ptr<Shader> skyboxShader = std::make_shared<Shader>("skybox.vert", "skybox.frag");
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
-		std::vector<std::string> files
-		{
-			"assets/textures/skybox/back.jpg",
-			"assets/textures/skybox/bottom.jpg",
-			"assets/textures/skybox/front.jpg",
-			"assets/textures/skybox/left.jpg",
-			"assets/textures/skybox/right.jpg",
-			"assets/textures/skybox/top.jpg",
-		};
 
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture);
 
+
+		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+
 		// Create geometry
 		Geometry cube = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.5f, 0.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 1.5f), woodTextureMaterial);
-		Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
-		Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
+		//Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
+		//Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
+		Geometry mainPlatform = Geometry(glm::mat4(1.0f), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
+		Geometry platform1 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(20.5f, 1.0f, -22.0f)), Geometry::createCubeGeometry(10.5f, 0.5f, 17.5f), tileTextureMaterial);
+		Geometry platform2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(25.5f, 3.0f, -40.0f)), Geometry::createCubeGeometry(12.5f, 0.5f, 13.5f), woodTextureMaterial);
+		Geometry platform3 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(22.5f, 5.0f, -58.0f)), Geometry::createCubeGeometry(8.5f, 0.5f, 10.5f), tileTextureMaterial);
+		Geometry platform4 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(22.5f, 8.0f, -85.0f)), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
+
+
+		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
+		ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
 
 
 		// Initialize camera
@@ -211,9 +215,16 @@ int main(int argc, char** argv)
 			setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
 
 			// Render
-			cube.draw();
-			cylinder.draw();
-			sphere.draw();
+			//cube.draw();
+			mainPlatform.draw();
+			platform1.draw();
+			platform2.draw();
+			platform3.draw();
+			platform4.draw();
+			//cylinder.draw();
+			//sphere.draw();
+
+			cat.Draw();
 
 			double t = glfwGetTime();
 			double dt = t - lastT;

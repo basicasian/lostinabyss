@@ -41,6 +41,8 @@ public:
 	 */
 	Material(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha);
 
+	Material::Material(std::shared_ptr<Shader> shader);
+
 	virtual ~Material();
 
 	/*!
@@ -52,6 +54,8 @@ public:
 	 * Sets this material's parameters as uniforms in the shader
 	 */
 	virtual void setUniforms();
+
+	void setShader(std::shared_ptr<Shader> shader);
 };
 
 
@@ -76,6 +80,8 @@ public:
 	 */
 	TextureMaterial(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture);
 	
+	TextureMaterial(std::shared_ptr<Shader> shader);
+
 	virtual ~TextureMaterial();
 
 	/*!

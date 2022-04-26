@@ -14,8 +14,18 @@ Material::Material(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficient
 {
 }
 
+Material::Material(std::shared_ptr<Shader> shader)
+	: _shader(shader)
+{
+}
+
 Material::~Material()
 {
+}
+
+
+void Material::setShader(std::shared_ptr<Shader> shader) {
+	_shader = shader;
 }
 
 Shader* Material::getShader()
@@ -35,6 +45,11 @@ void Material::setUniforms()
 
 TextureMaterial::TextureMaterial(std::shared_ptr<Shader> shader, glm::vec3 materialCoefficients, float alpha, std::shared_ptr<Texture> diffuseTexture)
 	: Material(shader, materialCoefficients, alpha), _diffuseTexture(diffuseTexture)
+{
+}
+
+TextureMaterial::TextureMaterial(std::shared_ptr<Shader> shader)
+	: Material(shader)
 {
 }
 
