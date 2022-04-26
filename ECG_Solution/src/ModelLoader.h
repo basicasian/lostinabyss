@@ -47,6 +47,7 @@ private:
     std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
 
 public:
+    std::vector<Mesh> getMeshes();
 
     unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 

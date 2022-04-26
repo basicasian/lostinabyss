@@ -214,4 +214,9 @@ void ModelLoader::SetModelMatrix(glm::mat4 modelMatrix)
     _modelMatrix = modelMatrix;
 }
 
+std::vector<Mesh> ModelLoader::getMeshes()
+{
+    return meshes;
+}
+
 

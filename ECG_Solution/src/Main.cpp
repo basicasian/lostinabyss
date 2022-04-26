@@ -15,7 +15,8 @@
 #include "Texture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
-#include <bullet/btBulletDynamicsCommon.h>
+#include "bullet/BulletWorld.h"
+#include "bullet/BulletBody.h"
 
 
 /* --------------------------------------------- */
@@ -154,6 +155,9 @@ int main(int argc, char** argv)
 		// Load shader(s)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
 
+		// Initialize bullet world
+		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
+
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
@@ -179,7 +183,7 @@ int main(int argc, char** argv)
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
 		ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-
+		BulletBody btCat = BulletBody(btTag, cat.getMeshes(), 1.0f, true, glm::vec3(0.0f, 2.0f, 0.0f), bulletWorld._world);
 
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
@@ -225,6 +229,8 @@ int main(int argc, char** argv)
 			//sphere.draw();
 
 			cat.Draw();
+			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+
 
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -238,6 +244,12 @@ int main(int argc, char** argv)
 
 			// draw user interface
 			_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
+
+			// bullet
+			bulletWorld.stepSimulation(
+				dt, // btScalar timeStep: seconds, not milliseconds, passed since the last call 
+				1, // maxSubSteps: should generally stay at one so Bullet interpolates current values on its own
+				btScalar(1.) / btScalar(60.)); // fixedTimeStep: inversely proportional to the simulation's resolution
 
 			// Swap buffers
 			glfwSwapBuffers(window);
