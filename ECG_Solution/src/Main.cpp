@@ -28,7 +28,9 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL);
+//void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL);
+void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
+glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 
 /* --------------------------------------------- */
@@ -45,6 +47,9 @@ boolean _gameLost = false;
 int window_width, window_height, _refresh_rate;
 GLFWmonitor* monitor;
 bool fullscreen;
+float _brightness;
+std::vector<DirectionalLight> dirLights;
+std::vector<PointLight> pointLights;
 
 
 /* --------------------------------------------- */
@@ -62,7 +67,7 @@ int main(int argc, char** argv)
 	window_width = reader.GetInteger("window", "width", 800);
 	window_height = reader.GetInteger("window", "height", 800);
 	_refresh_rate = reader.GetInteger("window", "refresh_rate", 60);
-	float _brightness = reader.GetInteger("window", "brightness", 1);
+	_brightness = reader.GetInteger("window", "brightness", 1);
 	fullscreen = reader.GetBoolean("window", "fullscreen", false);
 	std::string window_title = reader.Get("window", "title", "Lost in Abyss");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
@@ -175,25 +180,42 @@ int main(int argc, char** argv)
 		//Geometry cylinder = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, -1.0f, 0.0f)), Geometry::createCylinderGeometry(32, 1.3f, 1.0f), tileTextureMaterial);
 		//Geometry sphere = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.0f, 0.0f)), Geometry::createSphereGeometry(64, 32, 1.0f), tileTextureMaterial);
 		Geometry mainPlatform = Geometry(glm::mat4(1.0f), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
-		Geometry platform1 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(20.5f, 1.0f, -22.0f)), Geometry::createCubeGeometry(10.5f, 0.5f, 17.5f), tileTextureMaterial);
-		Geometry platform2 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(25.5f, 3.0f, -40.0f)), Geometry::createCubeGeometry(12.5f, 0.5f, 13.5f), woodTextureMaterial);
-		Geometry platform3 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(22.5f, 5.0f, -58.0f)), Geometry::createCubeGeometry(8.5f, 0.5f, 10.5f), tileTextureMaterial);
-		Geometry platform4 = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(22.5f, 8.0f, -85.0f)), Geometry::createCubeGeometry(20.5f, 0.5f, 20.5f), woodTextureMaterial);
-
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f));
-		ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		BulletBody btCat = BulletBody(btTag, cat.getMeshes(), 1.0f, true, glm::vec3(0.0f, 2.0f, 0.0f), bulletWorld._world);
+		//ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		ModelLoader scene = ModelLoader("assets/objects/scene.obj", catModel, catModelMaterial);
+		BulletBody btScene = BulletBody(btTag, scene.getMeshes(), 0.0f, true, glm::vec3(0.0f, 2.0f, 0.0f), bulletWorld._world);
 
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
-		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
+		//PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
+		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f, 3.0f, -1.0f), glm::vec3(1.0f, 0.4f, 0.1f));
 
 		// Initialize user interface/HUD
 		_ui = std::make_shared<UserInterface>("userinterface.vert", "userinterface.frag", window_width, window_height, _brightness, _fontpath);
+
+		// Initialize lights and put them into vector
+		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
+#pragma region directional lights
+		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, -1.0f));
+		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
+		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+		dirLights.push_back(dirL1);
+		dirLights.push_back(dirL2);
+		dirLights.push_back(dirL3);
+#pragma endregion
+
+#pragma region point lights
+		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL3(glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL1);
+		pointLights.push_back(pointL2);
+		pointLights.push_back(pointL3);
+
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -203,6 +225,9 @@ int main(int argc, char** argv)
 		int fpsCounter = 0;
 		double lastTime = glfwGetTime();
 		int fps = 0;
+
+		//lighting info
+		glm::vec3 lightPos(-2.0f, 10.0f, -1.0f);
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -216,21 +241,28 @@ int main(int argc, char** argv)
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
 
 			// Set per-frame uniforms
-			setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
+			//setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
 
 			// Render
 			//cube.draw();
 			mainPlatform.draw();
-			platform1.draw();
-			platform2.draw();
-			platform3.draw();
-			platform4.draw();
 			//cylinder.draw();
 			//sphere.draw();
 
-			cat.Draw();
-			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			scene.Draw();
+			scene.SetModelMatrix(glm::translate(glm::mat4(1.0f), btScene.getPosition()));
 
+			//calculate lightSpaceMatrix for shadow mapping 
+			//lightSpaceMatrix "T" to calculate the matrix transformation for the lights beam
+			glm::mat4 lightProjection, lightView;
+			glm::mat4 lightSpaceMatrix;
+			float near_plane = 1.0f, far_plane = 7.5f;
+			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
+			lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+			lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+			lightSpaceMatrix = lightProjection * lightView;
+			// render scene from light's point of view
+			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
 
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -273,7 +305,7 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
-
+/*
 void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL)
 {
 	shader->use();
@@ -285,6 +317,28 @@ void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL,
 	shader->setUniform("pointL.color", pointL.color);
 	shader->setUniform("pointL.position", pointL.position);
 	shader->setUniform("pointL.attenuation", pointL.attenuation);
+}*/
+
+void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
+{
+	shader->use();
+	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
+	shader->setUniform("camera_world", camera.getPosition());
+	shader->setUniform("brightness", _brightness);
+	shader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
+	shader->setUniform("lightPos", lightPos);
+
+	for (int i = 0; i < dirLights.size(); i++) {
+		DirectionalLight& dirL = dirLights[i];
+		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL.color);
+		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL.direction);
+	}
+	for (int i = 0; i < pointLights.size(); i++) {
+		PointLight& pointL = pointLights[i];
+		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL.color);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL.position);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL.attenuation);
+	}
 }
 
 
@@ -454,4 +508,22 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 	stringStream << ", ID = " << id << "]";
 
 	return stringStream.str();
+}
+
+glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up)
+{
+	glm::vec3 zaxis = normalize(at - eye);
+	glm::vec3 xaxis = normalize(cross(zaxis, up));
+	glm::vec3 yaxis = cross(xaxis, zaxis);
+
+	zaxis = -zaxis;
+
+	glm::mat4 viewMatrix = {
+	  glm::vec4(xaxis.x, xaxis.y, xaxis.z, -dot(xaxis, eye)),
+	  glm::vec4(yaxis.x, yaxis.y, yaxis.z, -dot(yaxis, eye)),
+	  glm::vec4(zaxis.x, zaxis.y, zaxis.z, -dot(zaxis, eye)),
+	  glm::vec4(0, 0, 0, 1)
+	};
+
+	return viewMatrix;
 }

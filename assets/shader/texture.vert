@@ -1,4 +1,4 @@
-#version 430 core
+#version 430
 /*
 * Copyright 2019 Vienna University of Technology.
 * Institute of Computer Graphics and Algorithms.
@@ -13,16 +13,20 @@ out VertexData {
 	vec3 position_world;
 	vec3 normal_world;
 	vec2 uv;
+	vec4 FragPosLightSpace;
 } vert;
+
 
 uniform mat4 modelMatrix;
 uniform mat4 viewProjMatrix;
 uniform mat3 normalMatrix;
+uniform mat4 lightSpaceMatrix;
 
 void main() {
 	vert.normal_world = normalMatrix * normal;
 	vert.uv = uv;
 	vec4 position_world_ = modelMatrix * vec4(position, 1);
 	vert.position_world = position_world_.xyz;
+	vert.FragPosLightSpace = lightSpaceMatrix * vec4(vert.position_world, 1.0);
 	gl_Position = viewProjMatrix * position_world_;
 }

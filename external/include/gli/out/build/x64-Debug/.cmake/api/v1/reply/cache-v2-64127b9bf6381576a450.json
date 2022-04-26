@@ -47,7 +47,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/git/lostInAbyss/external/include/glm/out/build/x64-Debug"
+			"value" : "c:/git/lostInAbyss/external/include/gli/out/build/x64-Debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -131,10 +131,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe"
 		},
 		{
@@ -243,10 +243,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "C compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe"
 		},
 		{
@@ -523,7 +523,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/git/lostInAbyss/external/include/glm"
+			"value" : "C:/git/lostInAbyss/external/include/gli"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -535,7 +535,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "C:/git/lostInAbyss/external/include/glm/out/install/x64-Debug"
+			"value" : "C:/git/lostInAbyss/external/include/gli/out/install/x64-Debug"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1083,7 +1083,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/git/lostInAbyss/external/include/glm/out/build/x64-Debug"
+			"value" : "C:/git/lostInAbyss/external/include/gli/out/build/x64-Debug"
 		},
 		{
 			"name" : "Project_SOURCE_DIR",
@@ -1095,7 +1095,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/git/lostInAbyss/external/include/glm"
+			"value" : "C:/git/lostInAbyss/external/include/gli"
 		}
 	],
 	"kind" : "cache",
