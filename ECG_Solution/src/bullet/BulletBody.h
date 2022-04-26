@@ -68,6 +68,8 @@ class BulletBody
 	*/
 	boolean _hit = false;
 
+	boolean isGeoData;
+
 
 
 public:

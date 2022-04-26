@@ -6,6 +6,7 @@ BulletBody::BulletBody(int tag, std::vector<Mesh> data, float mass, boolean conv
 {
 	createShapeWithVertices();
 	createBodyWithMass(dynamics_world);
+	isGeoData = false;
 
 }
 
@@ -14,12 +15,13 @@ BulletBody::BulletBody(int tag, GeometryData data, float mass, boolean convex, g
 {
 	createShapeWithVertices();
 	createBodyWithMass(dynamics_world);
+	isGeoData = true;
 
 }
 
 void BulletBody::createShapeWithVertices() {
 
-	if (&_geoData != nullptr) {
+	if (!isGeoData) {
 		// takes different approaches to create convex and concave shapes
 		if (_convex) {
 
