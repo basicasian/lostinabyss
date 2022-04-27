@@ -1,90 +1,142 @@
 
 #include "BulletBody.h"
 
-BulletBody::BulletBody(int tag, std::vector<Mesh> data, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world)
-	: _mass(mass), _convex(convex), _data(data), _position(position), _tag(tag)
+BulletBody::BulletBody(int tag, aiMesh* data, aiMatrix4x4 transformationMatrix, float mass, boolean convex, btDiscreteDynamicsWorld* dynamics_world)
+	: _mass(mass), _convex(convex), _data(data), _tag(tag), _transformationMatrix(transformationMatrix)
 {
-	createShapeWithVertices();
-	createBodyWithMass(dynamics_world);
 	isGeoData = false;
-
+	createMeshShapeWithVertices(data);
 }
 
 BulletBody::BulletBody(int tag, GeometryData data, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world)
-	: _mass(mass), _convex(convex), _geoData(data), _position(position), _tag(tag)
+	: _mass(mass), _convex(convex), _geoData(data), _position(position), _tag(tag), _dynamics_world(dynamics_world)
 {
-	createShapeWithVertices();
-	createBodyWithMass(dynamics_world);
 	isGeoData = true;
+	createShapeWithVertices();
+	createBodyWithMass();
 
+}
+
+BulletBody::BulletBody() {}
+
+void BulletBody::createMeshShapeWithVertices(aiMesh* data)
+{
+	glm::mat4 transform = aiMatrixToMat4(_transformationMatrix);
+
+	// Get information from transformation matrix
+	glm::vec3 translation = glm::vec3(transform[3]);
+	glm::mat3 cutoff = glm::mat3(transform);
+	glm::vec3 scale = glm::vec3(glm::length(cutoff[0]), glm::length(cutoff[1]), glm::length(cutoff[2]));
+	glm::quat rotation = glm::quat_cast(glm::mat3(cutoff[0] / scale.x, cutoff[1] / scale.y, cutoff[2] / scale.z));
+
+	/*
+	// takes different approaches to create convex and concave shapes
+	if (_convex) {
+
+		_shape = new btConvexHullShape();
+		for (int i = 0; i < _data._vertices.size(); i++) {
+
+			btVector3 btv = btVector3(_data._vertices[i].Position.x, _data._vertices[i].Position.y, _data._vertices[i].Position.z);
+			((btConvexHullShape*)_shape)->addPoint(btv);
+		}
+
+	}
+	else {
+		// gather triangles by grouping vertices from the list of vertices
+		
+		btTriangleMesh* mesh = new btTriangleMesh();
+
+		for (int i = 0; i < _data._vertices.size(); i += 3) {
+
+			btVector3 bv1 = btVector3(_data._vertices[i].Position.x, _data._vertices[i].Position.y, _data._vertices[i].Position.z);
+			btVector3 bv2 = btVector3(_data._vertices[i + 1].Position.x, _data._vertices[i + 1].Position.y, _data._vertices[i + 1].Position.z);
+			btVector3 bv3 = btVector3(_data._vertices[i + 2].Position.x, _data._vertices[i + 2].Position.y, _data._vertices[i + 2].Position.z);
+
+			mesh->addTriangle(bv1, bv2, bv3);
+			mesh->setScaling({ scale.x, scale.y, scale.z });
+		}*/
+		// Construct rigid body shape
+	
+	std::vector<btScalar> _vertices;
+	std::vector<int> _indices;
+	_vertices.reserve(data->mNumVertices * 3);
+	for (unsigned int i = 0; i < data->mNumVertices; i++) {
+		_vertices.push_back(data->mVertices[i].x);
+		_vertices.push_back(data->mVertices[i].y);
+		_vertices.push_back(data->mVertices[i].z);
+	}
+
+	_indices.reserve(data->mNumFaces * 3);
+	for (unsigned int i = 0; i < data->mNumFaces; i++) {
+		assert(data->mFaces[i].mNumIndices == 3);
+		for (unsigned int j = 0; j < data->mFaces[i].mNumIndices; j++)
+			_indices.push_back(data->mFaces[i].mIndices[j]);
+	}
+	btTriangleIndexVertexArray* _bulletMesh = new btTriangleIndexVertexArray(data->mNumFaces, _indices.data(), 3 * sizeof(unsigned int), data->mNumVertices, _vertices.data(), 3 * sizeof(btScalar));
+	// Apply scaling to bullet mesh
+	_bulletMesh->setScaling({scale.x, scale.y, scale.z});
+		
+	_shape = new btConvexTriangleMeshShape(_bulletMesh);
+
+	createMeshBodyWithMass(rotation, translation);
 }
 
 void BulletBody::createShapeWithVertices() {
-
-	if (!isGeoData) {
-		// takes different approaches to create convex and concave shapes
-		if (_convex) {
-
-			_shape = new btConvexHullShape();
-			for (auto& mesh : _data) {
-				for (int i = 0; i < mesh._vertices.size(); i++) {
-
-					btVector3 btv = btVector3(mesh._vertices[i].Position.x, mesh._vertices[i].Position.y, mesh._vertices[i].Position.z);
-					((btConvexHullShape*)_shape)->addPoint(btv);
-				}
-			}
-
-		}
-		else {
-			// gather triangles by grouping vertices from the list of vertices
-			btTriangleMesh* mesh = new btTriangleMesh();
-
-			for (auto& modelMesh : _data) {
-				for (int i = 0; i < modelMesh._vertices.size(); i += 3) {
-
-					btVector3 bv1 = btVector3(modelMesh._vertices[i].Position.x, modelMesh._vertices[i].Position.y, modelMesh._vertices[i].Position.z);
-					btVector3 bv2 = btVector3(modelMesh._vertices[i + 1].Position.x, modelMesh._vertices[i + 1].Position.y, modelMesh._vertices[i + 1].Position.z);
-					btVector3 bv3 = btVector3(modelMesh._vertices[i + 2].Position.x, modelMesh._vertices[i + 2].Position.y, modelMesh._vertices[i + 2].Position.z);
-
-					mesh->addTriangle(bv1, bv2, bv3);
-				}
-			}
-
-			_shape = new btBvhTriangleMeshShape(mesh, true);
-		}
-	}
-	else
-	{
-		if (_convex) {
-
-			_shape = new btConvexHullShape();
-			for (int i = 0; i < _geoData.positions.size(); i++) {
-
-				btVector3 btv = btVector3(_geoData.positions[i].x, _geoData.positions[i].y, _geoData.positions[i].z);
-				((btConvexHullShape*)_shape)->addPoint(btv);
-			}
-
-		}
-		else {
-			// gather triangles by grouping vertices from the list of vertices
-			btTriangleMesh* mesh = new btTriangleMesh();
-
-			for (int i = 0; i < _geoData.positions.size(); i += 3) {
-
-				btVector3 bv1 = btVector3(_geoData.positions[i].x, _geoData.positions[i].y, _geoData.positions[i].z);
-				btVector3 bv2 = btVector3(_geoData.positions[i + 1].x, _geoData.positions[i + 1].y, _geoData.positions[i + 1].z);
-				btVector3 bv3 = btVector3(_geoData.positions[i + 2].x, _geoData.positions[i + 2].y, _geoData.positions[i + 2].z);
-
-				mesh->addTriangle(bv1, bv2, bv3);
-			}
-
-			_shape = new btBvhTriangleMeshShape(mesh, true);
-		}
-	}
 	
+	if (_convex) {
+
+		_shape = new btConvexHullShape();
+		for (int i = 0; i < _geoData.positions.size(); i++) {
+
+			btVector3 btv = btVector3(_geoData.positions[i].x, _geoData.positions[i].y, _geoData.positions[i].z);
+			((btConvexHullShape*)_shape)->addPoint(btv);
+		}
+
+	}
+	else {
+		// gather triangles by grouping vertices from the list of vertices
+		btTriangleMesh* mesh = new btTriangleMesh();
+
+		for (int i = 0; i < _geoData.positions.size(); i += 3) {
+
+			btVector3 bv1 = btVector3(_geoData.positions[i].x, _geoData.positions[i].y, _geoData.positions[i].z);
+			btVector3 bv2 = btVector3(_geoData.positions[i + 1].x, _geoData.positions[i + 1].y, _geoData.positions[i + 1].z);
+			btVector3 bv3 = btVector3(_geoData.positions[i + 2].x, _geoData.positions[i + 2].y, _geoData.positions[i + 2].z);
+
+			mesh->addTriangle(bv1, bv2, bv3);
+		}
+
+		_shape = new btBvhTriangleMeshShape(mesh, true);
+	}
 }
 
-void BulletBody::createBodyWithMass(btDiscreteDynamicsWorld* _dynamics_world) {
+void BulletBody::createMeshBodyWithMass(glm::quat rotation, glm::vec3 translation)
+{
+	
+	btDefaultMotionState* motionState = new btDefaultMotionState(btTransform(btQuaternion(rotation.x, rotation.y, rotation.z, rotation.w), { translation.x, translation.y, translation.z }));
+
+	// set the mass and inertia values for the shape
+	btScalar bodyMass = _mass;
+	btVector3 bodyInertia;
+
+	_shape->calculateLocalInertia(bodyMass, bodyInertia);
+
+	// ConstructionInfo contains all the required properties to construct the body
+	btRigidBody::btRigidBodyConstructionInfo bodyInfo = btRigidBody::btRigidBodyConstructionInfo(bodyMass, motionState, _shape, bodyInertia);
+
+	bodyInfo.m_restitution = 0.0f;
+	bodyInfo.m_friction = 0.5f;
+
+	_body = new btRigidBody(bodyInfo);
+
+	_body->setUserPointer(this);
+
+	_dynamics_world->addRigidBody(_body);
+
+
+}
+
+void BulletBody::createBodyWithMass() {
 
 	btVector3 position = btVector3(_position.x, _position.y, _position.z);
 
@@ -137,3 +189,28 @@ void BulletBody::destroyBody(btDiscreteDynamicsWorld* dynamics_world) {
 	dynamics_world->removeRigidBody(this->_body);
 
 }
+
+glm::mat4 BulletBody::aiMatrixToMat4(const aiMatrix4x4& aiMatrix)
+{
+	glm::mat4 result = glm::mat4();
+
+	result[0][0] = (GLfloat)aiMatrix.a1;
+	result[0][1] = (GLfloat)aiMatrix.b1;
+	result[0][2] = (GLfloat)aiMatrix.c1;
+	result[0][3] = (GLfloat)aiMatrix.d1;
+	result[1][0] = (GLfloat)aiMatrix.a2;
+	result[1][1] = (GLfloat)aiMatrix.b2;
+	result[1][2] = (GLfloat)aiMatrix.c2;
+	result[1][3] = (GLfloat)aiMatrix.d2;
+	result[2][0] = (GLfloat)aiMatrix.a3;
+	result[2][1] = (GLfloat)aiMatrix.b3;
+	result[2][2] = (GLfloat)aiMatrix.c3;
+	result[2][3] = (GLfloat)aiMatrix.d3;
+	result[3][0] = (GLfloat)aiMatrix.a4;
+	result[3][1] = (GLfloat)aiMatrix.b4;
+	result[3][2] = (GLfloat)aiMatrix.c4;
+	result[3][3] = (GLfloat)aiMatrix.d4;
+
+	return result;
+}
+

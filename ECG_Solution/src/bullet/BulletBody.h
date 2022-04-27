@@ -32,6 +32,8 @@ class BulletBody
 	*/
 	bool _convex;
 
+	btDiscreteDynamicsWorld* _dynamics_world;
+
 	/*!
 	*  reference to a rigid body that you’ll create
 	*/
@@ -45,7 +47,9 @@ class BulletBody
 	/*!
 	*  data of geometry shape
 	*/
-	std::vector<Mesh> _data;
+	aiMesh* _data;
+
+	aiMatrix4x4 _transformationMatrix;
 
 	/*!
 	*  data of geometry shape
@@ -70,6 +74,7 @@ class BulletBody
 
 	boolean isGeoData;
 
+	glm::mat4 aiMatrixToMat4(const aiMatrix4x4& aiMatrix);
 
 
 public:
@@ -82,7 +87,7 @@ public:
 	* @param position: of the body
 	* @param dynamics_world: to add the bodies to the world
 	*/
-	BulletBody(int tag, std::vector<Mesh> data, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world);
+	BulletBody(int tag, aiMesh* data, aiMatrix4x4 transformationMatrix, float mass, boolean convex, btDiscreteDynamicsWorld* dynamics_world);
 
 	/*!
 	* constructor
@@ -97,6 +102,7 @@ public:
 	*/
 	BulletBody(int tag, GeometryData geoData, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world);
 
+	BulletBody();
 	/*!
 	 * Creates Shape with vertices
 	* @param width, height, depth: size of the cube simplifiation
@@ -104,13 +110,17 @@ public:
 	void createShapeWithVertices();
 	//void createShapeWithVertices(float width, float height, float depth);
 
+	void createMeshShapeWithVertices(aiMesh* data);
+
 	/*!
 	 * Creates Body with mass
 	 * @param _yaw: yaw of camera //REMOVED
 	 * @param _pitch: pitch of camera //REMOVED
 	 * @param _dynamics_world: dynamic world to add bodies
 	 */
-	void BulletBody::createBodyWithMass(btDiscreteDynamicsWorld* _dynamics_world);
+	void BulletBody::createBodyWithMass();
+
+	void BulletBody::createMeshBodyWithMass(glm::quat rotation, glm::vec3 translation);
 
 	/*!
 	 * set position

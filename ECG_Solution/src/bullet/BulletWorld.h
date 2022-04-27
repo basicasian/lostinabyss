@@ -11,7 +11,6 @@ private:
 	btSequentialImpulseConstraintSolver* _solver;
 	
 
-
 public:
 	/*!
 	* initialize a new bullet world
@@ -24,6 +23,7 @@ public:
 	void stepSimulation(btScalar timeStep, int maxSubSteps = 1, btScalar fixedTimeStep = btScalar(1.) / btScalar(60.));
 
 	void deleteBullet();
+
 };
 
 

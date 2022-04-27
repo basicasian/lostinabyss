@@ -4,12 +4,14 @@
 
 
 //constructor
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures)
-    : _vertices(vertices), _indices(indices), _textures(textures)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures, aiMatrix4x4 transformationMatrix, aiMesh* aiMesh)
+    : _vertices(vertices), _indices(indices), _textures(textures), _transformationMatrix(transformationMatrix), _aiMesh(aiMesh)
 {
     //set vertex buffers and attribute pointers with setupMesh()
     setupMesh();
 }
+
+Mesh::Mesh(){}
 
 //render mesh
 void Mesh::Draw(Shader* shader)

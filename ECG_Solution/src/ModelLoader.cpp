@@ -22,26 +22,42 @@ void ModelLoader::loadModel(string path)
     directory = path.substr(0, path.find_last_of('/'));
 
     //process nodes recursively 
-    processNode(scene->mRootNode, scene);
+    processNode(scene->mRootNode, scene, aiMatrix4x4());
 }
 
 //retrieves mesh data from nodes
-void ModelLoader::processNode(aiNode* node, const aiScene* scene)
+void ModelLoader::processNode(aiNode* node, const aiScene* scene, aiMatrix4x4 parentTransform)
 {
+
+    aiMatrix4x4 matrixTransformation = node->mTransformation;
+    aiMatrix4x4 transform = node->mTransformation * parentTransform;
+
     //iterating through all meshes in the node
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         //retrieve mesh 
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         //process mesh and then store it into the meshes vector
-        meshes.push_back(processMesh(mesh, scene));
+        meshes.push_back(processMesh(mesh, scene, transform));
     }
     //recursively process the children nodes
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        processNode(node->mChildren[i], scene);
+        processNode(node->mChildren[i], scene, transform);
     }
 
+}
+
+aiMatrix4x4 ModelLoader::getPositionMatrix(aiNode* node, aiMatrix4x4 positionMatrix)
+{
+    if (node->mParent != NULL)
+    {
+        positionMatrix = positionMatrix * node->mParent->mTransformation;
+        getPositionMatrix(node->mParent, positionMatrix);
+    }
+    else {
+        return positionMatrix;
+    }
 }
 
 
@@ -49,7 +65,7 @@ void ModelLoader::setShader(std::shared_ptr <Shader> shader) {
     _material->setShader(shader);
 }
 
-Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene) {
+Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene, aiMatrix4x4 matrixTransformation) {
 
     //data for processing meshes
     std::vector<Vertex> vertices;
@@ -108,7 +124,7 @@ Mesh ModelLoader::processMesh(aiMesh* mesh, const aiScene* scene) {
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
 
-    return Mesh(vertices, indices, textures);
+    return Mesh(vertices, indices, textures, matrixTransformation, mesh);
 }
 
 

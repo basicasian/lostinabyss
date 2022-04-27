@@ -8,6 +8,7 @@
 #include <assimp/Importer.hpp>
 
 #include "Geometry.h"
+#include "bullet/BulletBody.h"
 #include "Material.h"
 
 #include "Shader.h"
@@ -33,18 +34,19 @@ private:
     glm::mat4 _modelMatrix;
     std::shared_ptr<Material> _material;
 
-
     //loads model via assimp and stores meshes in meshes vector
     void loadModel(string path);
 
     //retrieves mesh data from nodes
-    void processNode(aiNode* node, const aiScene* scene);
+    void processNode(aiNode* node, const aiScene* scene, aiMatrix4x4 parentTransform);
 
-    Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+    Mesh processMesh(aiMesh* mesh, const aiScene* scene, aiMatrix4x4 matrixTransformation);
 
     //retrieve the texture's file location and load and generate the texture 
     //stores data in a Vertex struct
     std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName);
+
+    aiMatrix4x4 getPositionMatrix(aiNode* node, aiMatrix4x4 positionMatrix);
 
 public:
     std::vector<Mesh> getMeshes();

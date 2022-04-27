@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <assimp/scene.h>
 
 #include "Shader.h"
 
@@ -29,10 +30,13 @@ public:
     std::vector<unsigned int> _indices;
     std::vector<MeshTexture> _textures;
     unsigned int VAO;
-
+    aiMatrix4x4 _transformationMatrix;
+    aiMesh* _aiMesh;
 
     //constructor
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures);
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures, aiMatrix4x4 transformationMatrix, aiMesh* aiMesh);
+
+    Mesh();
 
     //render mesh
     void Draw(Shader* shader);
