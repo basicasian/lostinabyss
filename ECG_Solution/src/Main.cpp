@@ -176,21 +176,19 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 
 		// Create geometry
-		Geometry mainPlatform = Geometry(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-		BulletBody btPlatform = BulletBody(btTag, Geometry::createCubeGeometry(10.5f, 0.5f, 10.5f), 0.0f, true, glm::vec3(0.0f, 0.0f, 0.0f), bulletWorld._world);
+		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader cat = ModelLoader("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		ModelLoader scene = ModelLoader("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
+		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
 
 
-		//for (const auto& mesh : scene.getMeshes()) {
-		//	BulletBody btScene = BulletBody(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
-		//}
-
-		BulletBody btCat = BulletBody(btTag, Geometry::createCubeGeometry(0.1f, 0.2f, 0.1f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
-		
+		for (const auto& mesh : scene.getMeshes()) {
+			// store bullet body in a list or another data structure
+			BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+		}
 
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);

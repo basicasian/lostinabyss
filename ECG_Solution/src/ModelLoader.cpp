@@ -2,11 +2,11 @@
 #include "ModelLoader.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+static Assimp::Importer import;
 
 //loads model via assimp and stores meshes in meshes vector
 void ModelLoader::loadModel(string path)
 {
-    Assimp::Importer import;
 
     //aiProcess_Triangulate transforms all primitive shapes to triangbles
     const aiScene* scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
@@ -38,10 +38,12 @@ void ModelLoader::processNode(aiNode* node, const aiScene* scene, aiMatrix4x4 pa
         //retrieve mesh 
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         //process mesh and then store it into the meshes vector
+        //processmesh returnt kopie und daten werden vlt freigegeben
         meshes.push_back(processMesh(mesh, scene, transform));
+        std::cout << mesh->mNumVertices << std::endl;
     }
     //recursively process the children nodes
-    for (unsigned int i = 0; i < node->mNumChildren; i++)
+     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
         processNode(node->mChildren[i], scene, transform);
     }
@@ -230,7 +232,7 @@ void ModelLoader::SetModelMatrix(glm::mat4 modelMatrix)
     _modelMatrix = modelMatrix;
 }
 
-std::vector<Mesh> ModelLoader::getMeshes()
+std::vector<Mesh>& ModelLoader::getMeshes()
 {
     return meshes;
 }

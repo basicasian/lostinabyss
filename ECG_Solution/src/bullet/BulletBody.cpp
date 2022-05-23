@@ -2,16 +2,14 @@
 #include "BulletBody.h"
 
 BulletBody::BulletBody(int tag, aiMesh* data, aiMatrix4x4 transformationMatrix, float mass, boolean convex, btDiscreteDynamicsWorld* dynamics_world)
-	: _mass(mass), _convex(convex), _data(data), _tag(tag), _transformationMatrix(transformationMatrix)
+	: _mass(mass), _convex(convex), _data(data), _tag(tag), _transformationMatrix(transformationMatrix), _dynamics_world(dynamics_world)
 {
-	isGeoData = false;
-	createMeshShapeWithVertices(data);
+	createMeshShapeWithVertices();
 }
 
 BulletBody::BulletBody(int tag, GeometryData data, float mass, boolean convex, glm::vec3 position, btDiscreteDynamicsWorld* dynamics_world)
 	: _mass(mass), _convex(convex), _geoData(data), _position(position), _tag(tag), _dynamics_world(dynamics_world)
 {
-	isGeoData = true;
 	createShapeWithVertices();
 	createBodyWithMass();
 
@@ -19,7 +17,7 @@ BulletBody::BulletBody(int tag, GeometryData data, float mass, boolean convex, g
 
 BulletBody::BulletBody() {}
 
-void BulletBody::createMeshShapeWithVertices(aiMesh* data)
+void BulletBody::createMeshShapeWithVertices()
 {
 	glm::mat4 transform = aiMatrixToMat4(_transformationMatrix);
 
@@ -29,55 +27,34 @@ void BulletBody::createMeshShapeWithVertices(aiMesh* data)
 	glm::vec3 scale = glm::vec3(glm::length(cutoff[0]), glm::length(cutoff[1]), glm::length(cutoff[2]));
 	glm::quat rotation = glm::quat_cast(glm::mat3(cutoff[0] / scale.x, cutoff[1] / scale.y, cutoff[2] / scale.z));
 
-	/*
+	
 	// takes different approaches to create convex and concave shapes
 	if (_convex) {
 
 		_shape = new btConvexHullShape();
-		for (int i = 0; i < _data._vertices.size(); i++) {
+		for (int i = 0; i < _data->mNumVertices; i++) {
 
-			btVector3 btv = btVector3(_data._vertices[i].Position.x, _data._vertices[i].Position.y, _data._vertices[i].Position.z);
+			btVector3 btv = btVector3(_data->mVertices[i].x, _data->mVertices[i].y, _data->mVertices[i].z);
 			((btConvexHullShape*)_shape)->addPoint(btv);
 		}
 
 	}
 	else {
 		// gather triangles by grouping vertices from the list of vertices
-		
+
 		btTriangleMesh* mesh = new btTriangleMesh();
 
-		for (int i = 0; i < _data._vertices.size(); i += 3) {
+		for (int i = 0; i < _data->mNumVertices; i += 3) {
 
-			btVector3 bv1 = btVector3(_data._vertices[i].Position.x, _data._vertices[i].Position.y, _data._vertices[i].Position.z);
-			btVector3 bv2 = btVector3(_data._vertices[i + 1].Position.x, _data._vertices[i + 1].Position.y, _data._vertices[i + 1].Position.z);
-			btVector3 bv3 = btVector3(_data._vertices[i + 2].Position.x, _data._vertices[i + 2].Position.y, _data._vertices[i + 2].Position.z);
+			btVector3 bv1 = btVector3(_data->mVertices[i].x, _data->mVertices[i].y, _data->mVertices[i].z);
+			btVector3 bv2 = btVector3(_data->mVertices[i + 1].x, _data->mVertices[i + 1].y, _data->mVertices[i + 1].z);
+			btVector3 bv3 = btVector3(_data->mVertices[i + 2].x, _data->mVertices[i + 2].y, _data->mVertices[i + 2].z);
 
 			mesh->addTriangle(bv1, bv2, bv3);
 			mesh->setScaling({ scale.x, scale.y, scale.z });
-		}*/
-		// Construct rigid body shape
-	
-	std::vector<btScalar> _vertices;
-	std::vector<int> _indices;
-	_vertices.reserve(data->mNumVertices * 3);
-	for (unsigned int i = 0; i < data->mNumVertices; i++) {
-		_vertices.push_back(data->mVertices[i].x);
-		_vertices.push_back(data->mVertices[i].y);
-		_vertices.push_back(data->mVertices[i].z);
+		}
+		_shape = new btBvhTriangleMeshShape(mesh, true);
 	}
-
-	_indices.reserve(data->mNumFaces * 3);
-	for (unsigned int i = 0; i < data->mNumFaces; i++) {
-		assert(data->mFaces[i].mNumIndices == 3);
-		for (unsigned int j = 0; j < data->mFaces[i].mNumIndices; j++)
-			_indices.push_back(data->mFaces[i].mIndices[j]);
-	}
-	btTriangleIndexVertexArray* _bulletMesh = new btTriangleIndexVertexArray(data->mNumFaces, _indices.data(), 3 * sizeof(unsigned int), data->mNumVertices, _vertices.data(), 3 * sizeof(btScalar));
-	// Apply scaling to bullet mesh
-	_bulletMesh->setScaling({scale.x, scale.y, scale.z});
-		
-	_shape = new btConvexTriangleMeshShape(_bulletMesh);
-
 	createMeshBodyWithMass(rotation, translation);
 }
 
@@ -119,7 +96,9 @@ void BulletBody::createMeshBodyWithMass(glm::quat rotation, glm::vec3 translatio
 	btScalar bodyMass = _mass;
 	btVector3 bodyInertia;
 
-	_shape->calculateLocalInertia(bodyMass, bodyInertia);
+	if (_mass != 0.0f) {
+		_shape->calculateLocalInertia(bodyMass, bodyInertia);
+	}
 
 	// ConstructionInfo contains all the required properties to construct the body
 	btRigidBody::btRigidBodyConstructionInfo bodyInfo = btRigidBody::btRigidBodyConstructionInfo(bodyMass, motionState, _shape, bodyInertia);
@@ -132,8 +111,6 @@ void BulletBody::createMeshBodyWithMass(glm::quat rotation, glm::vec3 translatio
 	_body->setUserPointer(this);
 
 	_dynamics_world->addRigidBody(_body);
-
-
 }
 
 void BulletBody::createBodyWithMass() {

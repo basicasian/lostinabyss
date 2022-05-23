@@ -82,6 +82,7 @@ void Geometry::resetModelMatrix()
 	_modelMatrix = glm::mat4(1);
 }
 
+
 GeometryData Geometry::createCubeGeometry(float width, float height, float depth)
 {
 	GeometryData data;

@@ -72,8 +72,6 @@ class BulletBody
 	*/
 	boolean _hit = false;
 
-	boolean isGeoData;
-
 	glm::mat4 aiMatrixToMat4(const aiMatrix4x4& aiMatrix);
 
 
@@ -110,7 +108,7 @@ public:
 	void createShapeWithVertices();
 	//void createShapeWithVertices(float width, float height, float depth);
 
-	void createMeshShapeWithVertices(aiMesh* data);
+	void createMeshShapeWithVertices();
 
 	/*!
 	 * Creates Body with mass

@@ -49,7 +49,7 @@ private:
     aiMatrix4x4 getPositionMatrix(aiNode* node, aiMatrix4x4 positionMatrix);
 
 public:
-    std::vector<Mesh> getMeshes();
+    std::vector<Mesh>& getMeshes();
 
     unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 
