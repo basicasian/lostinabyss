@@ -33,14 +33,41 @@ uniform struct DirectionalLight {
 uniform struct PointLight {
 	vec3 color;
 	vec3 position;
-	vec3 attenuation;
+	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 3
+#define NR_DIR_LIGHTS 1
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 #define NR_POINT_LIGHTS 3
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
+
+vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation, float shadow) {
+	// diffuse shading
+	float diff = max(dot(normal, lightDir), 0.0);
+
+	// specular shading
+	vec3 reflectDir = reflect(-lightDir, normal);
+	float spec = pow(max(0, dot(reflectDir, viewDir)), alpha);
+
+	// combine results
+	float d = length(lightDir); // distance
+	lightDir = normalize(lightDir);
+
+	float att = 1.0;	
+	if (attenuate) {
+		att = 1.0f / (attenuation.x + d * attenuation.y + d * d * attenuation.z);
+	}
+	
+	// material colour * light colour * shading
+	if (attenuate) {
+		return (diffuseF * (diffuseC * diff) + specularF * (specularC * spec)) * att;
+	} else {
+		return (1-shadow) * (diffuseF * (diffuseC * diff) + specularF * (specularC * spec)) * att;
+	}
+}
+
+/*
 vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
 	float d = length(l);
 	l = normalize(l);
@@ -48,18 +75,26 @@ vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuseC, float diffuseF, vec3 specularC
 	if(attenuate) att = 1.0f / (attenuation.x + d * attenuation.y + d * d * attenuation.z);
 	vec3 r = reflect(-l, n);
 	return (diffuseF * diffuseC * max(0, dot(n, l)) + specularF * specularC * pow(max(0, dot(r, v)), alpha)) * att; 
-}
+}*/
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
     // transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
+
     // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
     float closestDepth = texture(shadowMap, projCoords.xy).r; 
+
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
+
+	// check whether current frag pos is in shadow
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+
+	/*
     // calculate bias (based on depth map resolution and slope)
     vec3 normal = normalize(vert.normal_world);
     vec3 lightDir = normalize(lightPos - vert.position_world);
@@ -81,30 +116,34 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     
     // keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
     if(projCoords.z > 1.0)
-        shadow = 0.0;
+        shadow = 0.0;*/
         
-    return shadow;
+    return shadow;  
 }
 
 void main() {	
 	
-	float shadow = ShadowCalculation(vert.FragPosLightSpace);        
-	vec3 n = normalize(vert.normal_world);
-	vec3 v = normalize(camera_world - vert.position_world);
+	vec3 normal = normalize(vert.normal_world);
+	vec3 viewDir = normalize(camera_world - vert.position_world);
 	
 	vec3 texColor = texture(diffuseTexture, vert.uv).rgb;
 	color = vec4(texColor * materialCoefficients.x, 1); // ambient
-	
+		
+	// calculate shadow
+	float shadow = ShadowCalculation(vert.FragPosLightSpace);  
+
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
-	color.rgb += brightness * phong(n, -dirLights[i].direction, v, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
+	color.rgb += brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0), shadow);
 	}
 	// phase 2: Point lights
 	// add point light contribution
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
-	color.rgb += brightness * phong(n, pointLights[i].position - vert.position_world, v, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
+	color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation, shadow);
 	}
+      
+
 
 }
 
