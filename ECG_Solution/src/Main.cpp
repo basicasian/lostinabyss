@@ -273,7 +273,6 @@ int main(int argc, char** argv)
 		// shader configuration
 		quadShader -> use();
 		quadShader -> setUniform("depthMap", 0);
-		
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -314,29 +313,18 @@ int main(int argc, char** argv)
 			glViewport(0, 0, window_width, window_height);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-			// render Depth map to quad for visual debugging
-	     	// ---------------------------------------------
-			
-			quadShader -> use();
-			quadShader-> setUniform("near_plane", near_plane);
-			quadShader->setUniform("far_plane", far_plane);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, depthMap);
-			renderQuad();
-
-			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
+			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
 			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
 			// Render
-			/*
 			mainBox.draw();
 			//testBox.draw();
 			testPlatform.draw();
 			cat.Draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			scene.Draw();
-			*/
+			
+
 			double t = glfwGetTime();
 			double dt = t - lastT;
 			if ((int)floor(lastT) != (int)floor(t)) {
@@ -356,6 +344,14 @@ int main(int argc, char** argv)
 				dt, // btScalar timeStep: seconds, not milliseconds, passed since the last call 
 				1, // maxSubSteps: should generally stay at one so Bullet interpolates current values on its own
 				btScalar(1.) / btScalar(60.)); // fixedTimeStep: inversely proportional to the simulation's resolution
+
+			// render depth map to quad for visual debugging
+			quadShader->use();
+			quadShader->setUniform("near_plane", near_plane);
+			quadShader->setUniform("far_plane", far_plane);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, depthMap);
+			renderQuad();
 
 			// Swap buffers
 			glfwSwapBuffers(window);
