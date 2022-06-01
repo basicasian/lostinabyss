@@ -72,6 +72,11 @@ protected:
 	std::shared_ptr<Material> _material;
 
 	/*!
+	 * Referece to depth map
+	 */
+	std::shared_ptr<Material> _depthMaterial;
+
+	/*!
 	 * Model matrix of the object
 	 */
 	glm::mat4 _modelMatrix;
@@ -84,7 +89,7 @@ public:
 	 * @param data: data for the geometry object
 	 * @param material: material of the geometry object
 	 */
-	Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material);
+	Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material, std::shared_ptr<Material> depthMaterial);
 	~Geometry();
 
 	/*!

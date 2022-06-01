@@ -178,29 +178,55 @@ int main(int argc, char** argv)
 
 		unsigned int testTexture = loadTexture("assets/textures/wood.png");
 
+		// -----------------------
+		// shadowmapping 
+		// create a framebuffer object for rendering the depth map
+		GLuint depthMapFBO;
+		glGenFramebuffers(1, &depthMapFBO);
+
+		// create 2d texture, framebuffer's depth buffer: 
+		const unsigned int SHADOW_WIDTH = window_width, SHADOW_HEIGHT = window_height;
+		GLuint depthMap;
+		glGenTextures(1, &depthMap);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		// attach depth texture as FBO's depth buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+		glDrawBuffer(GL_NONE); // no colour
+		glReadBuffer(GL_NONE);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+
+		// -----------------------
+		
 		// Create textures
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", depthMap);
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", depthMap);
 
 		// Create materials
-		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
-		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, tileTexture);
+		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
+		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
-		
-		// Create geometry
-		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), woodTextureMaterial);
-		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -4.0f, 6.0f)), Geometry::createCubeGeometry(5.5f, 2.5f, 0.5f), depthMaterial);
-		Geometry testBox2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -5.0f, 6.0f)), Geometry::createCubeGeometry(2.5f, 2.5f, 0.5f), depthMaterial);
 
+		// Create geometry
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial, depthMaterial);
+		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), woodTextureMaterial, depthMaterial);
+		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -4.0f, 6.0f)), Geometry::createCubeGeometry(10.0f, 2.5f, 10.0f), tileTextureMaterial, depthMaterial);
+		Geometry testBox2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 6.0f)), Geometry::createCubeGeometry(2.5f, 2.5f, 2.5f), tileTextureMaterial, depthMaterial);
+		
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial, depthMaterial);
 		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial, depthMaterial);
 		
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure
@@ -246,29 +272,6 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
-
-		// shadowmapping 
-		// create a framebuffer object for rendering the depth map
-		GLuint depthMapFBO;
-		glGenFramebuffers(1, &depthMapFBO);
-
-		// create 2d texture, framebuffer's depth buffer: 
-		const unsigned int SHADOW_WIDTH = window_width, SHADOW_HEIGHT = window_height;
-		GLuint depthMap = 0;
-		glGenTextures(1, &depthMap);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		// attach depth texture as FBO's depth buffer
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-		glDrawBuffer(GL_NONE); // no colour
-		glReadBuffer(GL_NONE);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		
 		// shader configuration
 		quadShader -> use();
@@ -288,7 +291,7 @@ int main(int argc, char** argv)
 			// 1. render depth of scene to texture (from light's perspective)
 			glm::mat4 lightProjection, lightView;
 			glm::mat4 lightSpaceMatrix;
-			float near_plane = 1.0f, far_plane = 7.5f;
+			float near_plane = -10.0f, far_plane = 70.0f;
 			// note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
 			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
 			lightProjection = glm::ortho(-10.0f, 1.0f, -10.0f, 1.0f, near_plane, far_plane);
@@ -305,26 +308,36 @@ int main(int argc, char** argv)
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glActiveTexture(GL_TEXTURE0); 
 			glBindTexture(GL_TEXTURE_2D, testTexture);
+
 			testBox.drawDepth();
 			testBox2.drawDepth();
+			mainBox.drawDepth();
+			testPlatform.drawDepth();
+			cat.DrawDepth();
+			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			scene.DrawDepth();
+
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			// reset viewport
 			glViewport(0, 0, window_width, window_height);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+			// 2. render scene as normal using the generated depth/shadow map 
+			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
-			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
 			// Render
+			testBox.draw();
+			testBox2.draw();
 			mainBox.draw();
-			//testBox.draw();
 			testPlatform.draw();
 			cat.Draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			scene.Draw();
 			
-
 			double t = glfwGetTime();
 			double dt = t - lastT;
 			if ((int)floor(lastT) != (int)floor(t)) {
@@ -347,11 +360,9 @@ int main(int argc, char** argv)
 
 			// render depth map to quad for visual debugging
 			quadShader->use();
-			quadShader->setUniform("near_plane", near_plane);
-			quadShader->setUniform("far_plane", far_plane);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, depthMap);
-			renderQuad();
+			// renderQuad();
 
 			// Swap buffers
 			glfwSwapBuffers(window);
@@ -383,6 +394,8 @@ void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<Directional
 	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
 	shader->setUniform("camera_world", camera.getPosition());
 	shader->setUniform("brightness", _brightness);
+
+	// shader->setUniform("shadowTexture", 1);
 
 	for (int i = 0; i < dirLights.size(); i++) {
 		DirectionalLight& dirL = dirLights[i];

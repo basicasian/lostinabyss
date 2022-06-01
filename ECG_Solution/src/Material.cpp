@@ -39,6 +39,10 @@ void Material::setUniforms()
 	_shader->setUniform("specularAlpha", _alpha);
 }
 
+void Material::bindTexture(GLuint depthMap)
+{
+}
+
 /* --------------------------------------------- */
 // Texture material
 /* --------------------------------------------- */
@@ -63,4 +67,6 @@ void TextureMaterial::setUniforms()
 
 	_diffuseTexture->bind(0);
 	_shader->setUniform("diffuseTexture", 0);
+	_shader->setUniform("shadowTexture", 1);
+
 }
