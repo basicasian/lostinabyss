@@ -72,6 +72,18 @@ void Geometry::draw()
 	glBindVertexArray(0);
 }
 
+void Geometry::drawDepth()
+{
+	Shader* shader = _material->getShader();
+	shader->use();
+
+	shader->setUniform("modelMatrix", _modelMatrix);
+
+	glBindVertexArray(_vao);
+	glDrawElements(GL_TRIANGLES, _elements, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
 void Geometry::transform(glm::mat4 transformation)
 {
 	_modelMatrix = transformation * _modelMatrix;

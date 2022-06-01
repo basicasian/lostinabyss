@@ -32,6 +32,7 @@ void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<Directional
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
+void renderQuad();
 
 /* --------------------------------------------- */
 // Global variables
@@ -171,18 +172,23 @@ int main(int argc, char** argv)
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 
+		
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
-		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.4f, 0.3f), 8.0f, tileTexture);
+		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, tileTexture);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
+		
 
 		// Create geometry
-		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), woodTextureMaterial);
+		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -191,12 +197,12 @@ int main(int argc, char** argv)
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
 
-
+		
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure
 			BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
 		}
-
+		
 		// Initialize camera
 		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
@@ -205,7 +211,7 @@ int main(int argc, char** argv)
 
 		// Initialize lights and put them into vector
 		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
-	#pragma region directional lights
+		#pragma region directional lights
 		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, -1.0f));
 		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
 		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
@@ -214,7 +220,7 @@ int main(int argc, char** argv)
 		dirLights.push_back(dirL3);
 	#pragma endregion
 
-	#pragma region point lights
+		#pragma region point lights
 		PointLight pointL1(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		PointLight pointL2(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		PointLight pointL3(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
@@ -232,7 +238,7 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
-		/*
+
 		// shadowmapping (should be put in seperate file like shadowmaptexture.cpp)
 		// create a framebuffer object for rendering the depth map
 		unsigned int depthMapFBO;
@@ -255,8 +261,11 @@ int main(int argc, char** argv)
 		glDrawBuffer(GL_NONE); // no colour
 		glReadBuffer(GL_NONE);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		*/
-
+		
+		// shader configuration
+		quadShader -> use();
+		quadShader -> setUniform("depthMap", 0);
+		
 		// lighting info
 		glm::vec3 lightPos(0.0f, -1.0f, -1.0f);
 
@@ -271,9 +280,6 @@ int main(int argc, char** argv)
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
 
-			// Set per-frame uniforms
-			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
-
 			// 1. render depth of scene to texture (from light's perspective)
 			glm::mat4 lightProjection, lightView;
 			glm::mat4 lightSpaceMatrix;
@@ -282,39 +288,42 @@ int main(int argc, char** argv)
 			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
 			lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_plane, far_plane);
 
-			lightView =  glm::lookAt(glm::vec3(0.0f, -1.0f, -1.0f),
-									 glm::vec3(0.0f, 0.0f, 0.0f),
-									 glm::vec3(0.0f, 1.0f, 0.0f));
-
-			//lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-			//lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+			lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+			// lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 			lightSpaceMatrix = lightProjection * lightView;
-
-			// render scene from light's point of view
 
 			depthShader->use();
 			depthShader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
-			
 
-			/*
 			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, woodTexture);
-            renderScene(simpleDepthShader);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);;*/
- 
+			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			testBox.drawDepth();
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			
+			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			// render Depth map to quad for visual debugging
+			// ---------------------------------------------
+			quadShader -> use();
+			quadShader -> setUniform("near_plane", near_plane);
+			quadShader ->setUniform("far_plane", far_plane);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, depthMap);
+			renderQuad();
+
 
 			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
+			//setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
 			// Render
-			mainPlatform.draw();
-
+			mainBox.draw();
+			testBox.draw();
+			testPlatform.draw();
 			cat.Draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			scene.Draw();
-
 
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -357,6 +366,7 @@ int main(int argc, char** argv)
 
 	return EXIT_SUCCESS;
 }
+
 
 
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
@@ -591,3 +601,32 @@ glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up)
 	return viewMatrix;
 }
 
+
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+	if (quadVAO == 0)
+	{
+		float quadVertices[] = {
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+}

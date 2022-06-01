@@ -93,6 +93,8 @@ public:
 	 */
 	void draw();
 
+	void drawDepth();
+
 	/*!
 	 * Transforms the object, i.e. updates the model matrix
 	 * @param transformation: the transformation matrix to be applied to the object
