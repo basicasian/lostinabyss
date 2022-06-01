@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bullet/btBulletDynamicsCommon.h>
+#include "../Utils.h"
 
 class BulletWorld
 {
@@ -24,6 +25,11 @@ public:
 
 	void deleteBullet();
 
+	float rayTestHits(glm::vec3 from, glm::vec3 to);
+
+	void removeRigidBody(btRigidBody* body);
+
+	void addRigidBody(btRigidBody* body);
 };
 
 

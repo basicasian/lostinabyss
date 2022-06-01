@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include <sstream>
 #include "Camera.h"
+#include "CameraPlayer.h"
 #include "Shader.h"
 #include "Geometry.h"
 #include "Material.h"
@@ -29,9 +30,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 //void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL);
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
+void setPerFrameUniforms(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
-
+void poll_keys(GLFWwindow* window, double dt);
 
 /* --------------------------------------------- */
 // Global variables
@@ -42,6 +43,7 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 6.0f;
+static CameraPlayer _player(glm::vec3(0.0f, 2.0f, 0.0f));
 int _timer = 300;
 boolean _gameLost = false;
 int window_width, window_height, _refresh_rate;
@@ -75,6 +77,7 @@ int main(int argc, char** argv)
 	float farZ = float(reader.GetReal("camera", "far", 100.0f));
 	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
 
+	_player.setProjectionMatrix(fov, farZ, nearZ, (float)window_width / (float)window_height);
 	std::shared_ptr<UserInterface> _ui;
 
 	/* --------------------------------------------- */
@@ -131,6 +134,7 @@ int main(int argc, char** argv)
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	}
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -162,6 +166,7 @@ int main(int argc, char** argv)
 
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
+		_player.addToWorld(bulletWorld);
 
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
@@ -176,7 +181,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 
 		// Create geometry
-		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -186,12 +191,19 @@ int main(int argc, char** argv)
 
 
 		for (const auto& mesh : scene.getMeshes()) {
-			// store bullet body in a list or another data structure
-			BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+			// store bullet body in a list or another data structure 
+			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
+			string name(mesh._aiMesh->mName.C_Str());
+			if (!(name.compare("hull"))) {
+				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+			}
+			else {
+				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
+			}
 		}
 
 		// Initialize camera
-		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
+		//Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
@@ -230,6 +242,9 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
+		double last_mouse_x, last_mouse_y;
+		glfwGetCursorPos(window, &last_mouse_x, &last_mouse_y);
+
 		//lighting info
 		glm::vec3 lightPos(-2.0f, 10.0f, -1.0f);
 
@@ -241,8 +256,12 @@ int main(int argc, char** argv)
 			glfwPollEvents();
 
 			// Update camera
+			poll_keys(window, dt);
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
+			//camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
+			_player.inputMouseMovement(mouse_x - last_mouse_x, last_mouse_y - mouse_y);
+			last_mouse_x = mouse_x;
+			last_mouse_y = mouse_y;
 
 			// Set per-frame uniforms
 			//setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
@@ -264,7 +283,7 @@ int main(int argc, char** argv)
 			lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 			lightSpaceMatrix = lightProjection * lightView;
 			// render scene from light's point of view
-			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
+			setPerFrameUniforms(textureShader.get(), dirLights, pointLights, lightSpaceMatrix, lightPos);
 
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -309,11 +328,13 @@ int main(int argc, char** argv)
 }
 
 
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
+void setPerFrameUniforms(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
 {
 	shader->use();
-	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	shader->setUniform("camera_world", camera.getPosition());
+	//shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
+	//shader->setUniform("camera_world", camera.getPosition());
+	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
+	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
 	shader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
 	shader->setUniform("lightPos", lightPos);
@@ -346,6 +367,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
 		_strafing = false;
 	}
+}
+
+void poll_keys(GLFWwindow* window, double dt) {
+	KeyInput input;
+	input.backward = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+	input.forward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+	input.left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+	input.right = glfwGetKey(window, GLFW_KEY_D);
+	input.jump = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+	_player.inputKeys(input, dt);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\CameraPlayer.cpp" />
     <ClCompile Include="src\bullet\BulletBody.cpp" />
     <ClCompile Include="src\bullet\BulletWorld.cpp" />
     <ClCompile Include="src\ModelLoader.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
-    <ClCompile Include="src\NewCamera.cpp" />
     <ClCompile Include="src\UserInterface.cpp" />
+    <ClInclude Include="src\CameraPlayer.h" />
     <ClInclude Include="src\bullet\BulletBody.h" />
     <ClInclude Include="src\bullet\BulletWorld.h" />
     <ClInclude Include="src\Camera.h" />
@@ -19,7 +20,6 @@
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\ModelLoader.h" />
     <ClInclude Include="src\Mesh.h" />
-    <ClInclude Include="src\NewCamera.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\UserInterface.h" />
