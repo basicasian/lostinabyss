@@ -97,6 +97,12 @@ void CameraPlayer::inputKeys(KeyInput& input, double deltaTime)
     if (input.left)
         dir -= _right;
 
+    // Remove vertical component
+    dir = dir * (glm::vec3(1, 1, 1) - _worldUp);
+    if (input.jump) {
+        dir += _worldUp * 1.5f;
+    }
+
     glm::vec3 force = glm::normalize(dir) * _movementSpeed * _MASS;
 
     if (!glm::any(glm::isnan(force))) {
@@ -104,9 +110,21 @@ void CameraPlayer::inputKeys(KeyInput& input, double deltaTime)
             _rigidBody->applyCentralForce({ force.x, force.y, force.z });
     }
 
-    if (input.jump)
+    bool groundTouched = false;
+    float distanceFromPlayerToGround;
+    glm::vec3 currPosition(getPosition());
+    glm::vec3 direction = glm::vec3(0, -1000, 0);
+    distanceFromPlayerToGround = _physicsWorld->rayTestHits(currPosition, direction);
+
+    // ground level = 1, but adding 0.2 for buffer
+    if (distanceFromPlayerToGround <= 1.2) {
+        groundTouched = true;
+    } 
+
+    // only jump if the ground is touched
+    if (input.jump && groundTouched)
     {
-        _rigidBody->applyCentralImpulse({ _up.x, _up.y, _up.z });
+        _rigidBody->applyCentralImpulse({ 0, 2, 0 });
     }
 }
 

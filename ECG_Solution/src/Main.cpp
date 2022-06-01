@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 	std::string window_title = reader.Get("window", "title", "Lost in Abyss");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
-	float farZ = float(reader.GetReal("camera", "far", 100.0f));
+	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
 	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
 
 	_player.setProjectionMatrix(fov, farZ, nearZ, (float)window_width / (float)window_height);
