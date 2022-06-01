@@ -27,6 +27,7 @@ public:
 	Texture(std::string file);
 	~Texture();
 
+	 
 	/*!
 	 * Activates the texture unit and binds this texture
 	 * @param unit: the texture unit

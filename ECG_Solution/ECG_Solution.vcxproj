@@ -21,7 +21,6 @@
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\NewCamera.h" />
     <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\ShadowMapTexture.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Utils.h" />

@@ -18,6 +18,8 @@
 #include "bullet/BulletWorld.h"
 #include "bullet/BulletBody.h"
 
+#include <stb_image.h>
+#include <iostream>
 
 /* --------------------------------------------- */
 // Prototypes
@@ -33,6 +35,7 @@ void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<Directional
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 void renderQuad();
+unsigned int loadTexture(char const* path);
 
 /* --------------------------------------------- */
 // Global variables
@@ -172,7 +175,9 @@ int main(int argc, char** argv)
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 
-		
+
+		unsigned int testTexture = loadTexture("assets/textures/wood.png");
+
 		// Create textures
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
@@ -180,15 +185,15 @@ int main(int argc, char** argv)
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, tileTexture);
+		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
-		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		
-
 		// Create geometry
 		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), woodTextureMaterial);
-		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -4.0f, 6.0f)), Geometry::createCubeGeometry(5.5f, 2.5f, 0.5f), depthMaterial);
+		Geometry testBox2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -5.0f, 6.0f)), Geometry::createCubeGeometry(2.5f, 2.5f, 0.5f), depthMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -196,7 +201,6 @@ int main(int argc, char** argv)
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
-
 		
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure
@@ -212,7 +216,11 @@ int main(int argc, char** argv)
 		// Initialize lights and put them into vector
 		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
 		#pragma region directional lights
-		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, -1.0f));
+
+		// lighting info
+		glm::vec3 lightPos(0.0f, -1.0f, -1.0f);
+
+		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), lightPos);
 		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
 		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		dirLights.push_back(dirL1);
@@ -239,14 +247,14 @@ int main(int argc, char** argv)
 		int fps = 0;
 
 
-		// shadowmapping (should be put in seperate file like shadowmaptexture.cpp)
+		// shadowmapping 
 		// create a framebuffer object for rendering the depth map
-		unsigned int depthMapFBO;
+		GLuint depthMapFBO;
 		glGenFramebuffers(1, &depthMapFBO);
 
 		// create 2d texture, framebuffer's depth buffer: 
 		const unsigned int SHADOW_WIDTH = window_width, SHADOW_HEIGHT = window_height;
-		unsigned int depthMap;
+		GLuint depthMap = 0;
 		glGenTextures(1, &depthMap);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -260,14 +268,12 @@ int main(int argc, char** argv)
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 		glDrawBuffer(GL_NONE); // no colour
 		glReadBuffer(GL_NONE);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		
 		// shader configuration
 		quadShader -> use();
 		quadShader -> setUniform("depthMap", 0);
 		
-		// lighting info
-		glm::vec3 lightPos(0.0f, -1.0f, -1.0f);
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -286,7 +292,7 @@ int main(int argc, char** argv)
 			float near_plane = 1.0f, far_plane = 7.5f;
 			// note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
 			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
-			lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, near_plane, far_plane);
+			lightProjection = glm::ortho(-10.0f, 1.0f, -10.0f, 1.0f, near_plane, far_plane);
 
 			lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 			// lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
@@ -298,33 +304,39 @@ int main(int argc, char** argv)
 			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 			glClear(GL_DEPTH_BUFFER_BIT);
+			glActiveTexture(GL_TEXTURE0); 
+			glBindTexture(GL_TEXTURE_2D, testTexture);
 			testBox.drawDepth();
+			testBox2.drawDepth();
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			
-			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+
+			// reset viewport
+			glViewport(0, 0, window_width, window_height);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
 			// render Depth map to quad for visual debugging
-			// ---------------------------------------------
+	     	// ---------------------------------------------
+			
 			quadShader -> use();
-			quadShader -> setUniform("near_plane", near_plane);
-			quadShader ->setUniform("far_plane", far_plane);
+			quadShader-> setUniform("near_plane", near_plane);
+			quadShader->setUniform("far_plane", far_plane);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, depthMap);
 			renderQuad();
 
-
-			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
-			//setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
+			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
+			// setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
 			// Render
+			/*
 			mainBox.draw();
-			testBox.draw();
+			//testBox.draw();
 			testPlatform.draw();
 			cat.Draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			scene.Draw();
-
+			*/
 			double t = glfwGetTime();
 			double dt = t - lastT;
 			if ((int)floor(lastT) != (int)floor(t)) {
@@ -601,7 +613,47 @@ glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up)
 	return viewMatrix;
 }
 
+// utility function for loading a 2D texture from file
+// ---------------------------------------------------
+unsigned int loadTexture(char const* path)
+{
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
 
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		GLenum format;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
+}
+
+// renderQuad() renders a 1x1 XY quad in NDC
+// -----------------------------------------
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
 void renderQuad()
