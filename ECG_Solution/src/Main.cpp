@@ -207,8 +207,8 @@ int main(int argc, char** argv)
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
-		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 
+		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 
 		// Create geometry
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 		dirLights.push_back(dirL1);
 
 		// orangey
-		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, 0.5f));
+		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, -1.0f));
 		dirLights.push_back(dirL2);
 		
 		// pinkish
@@ -288,22 +288,6 @@ int main(int argc, char** argv)
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
 
-			glm::mat4 lightSpaceMatrix;
-
-			/*
-
-			glm::mat4 lightProjection, lightView;
-			
-			float near_plane = -10.0f, far_plane = 70.0f;
-			lightProjection = glm::ortho(-20.0f, 40.0f, -40.0f, 20.0f, near_plane, far_plane);
-
-			// second parameter is lightdirection -> has to be adapated for several lights
-			lightView = glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0, 0.0, 1.0));
-			lightSpaceMatrix = lightProjection * lightView;
-
-			depthShader->use();
-			depthShader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
-			*/
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
