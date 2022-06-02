@@ -8,6 +8,7 @@
 #include "Utils.h"
 #include <sstream>
 #include "Camera.h"
+#include "CameraPlayer.h"
 #include "Shader.h"
 #include "Geometry.h"
 #include "Material.h"
@@ -31,13 +32,15 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void poll_keys(GLFWwindow* window, double dt);
+
 void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
-glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 void renderQuad();
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
-
 void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
+
+glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 /* --------------------------------------------- */
 // Global variables
@@ -48,6 +51,7 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 6.0f;
+static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 
 int _timer = 300;
 boolean _gameLost = false;
@@ -80,9 +84,10 @@ int main(int argc, char** argv)
 	std::string window_title = reader.Get("window", "title", "Lost in Abyss");
 	float fov = float(reader.GetReal("camera", "fov", 60.0f));
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
-	float farZ = float(reader.GetReal("camera", "far", 100.0f));
+	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
 	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
 
+	_player.setProjectionMatrix(fov, farZ, nearZ, (float)window_width / (float)window_height);
 	std::shared_ptr<UserInterface> _ui;
 
 	/* --------------------------------------------- */
@@ -139,6 +144,7 @@ int main(int argc, char** argv)
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	}
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	/* --------------------------------------------- */
 	// Init framework
@@ -176,6 +182,7 @@ int main(int argc, char** argv)
 
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
+		_player.addToWorld(bulletWorld);
 
 		// -----------------------
 		
@@ -189,14 +196,13 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 
-
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
 		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-	
+
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
 		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
@@ -205,8 +211,16 @@ int main(int argc, char** argv)
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
 		
 		for (const auto& mesh : scene.getMeshes()) {
-			// store bullet body in a list or another data structure
-			BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+			// store bullet body in a list or another data structure 
+			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
+			string name(mesh._aiMesh->mName.C_Str());
+			if (!(name.compare("hull"))) {
+				//std::cout << "this is hull" << std::endl;
+				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+			}
+			else {
+				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
+			}
 		}
 		
 		// Initialize camera
@@ -253,10 +267,13 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
-		
+
 		// shader configuration
 		quadShader -> use();
 		quadShader -> setUniform("depthMap", 0);
+		double last_mouse_x, last_mouse_y;
+		glfwGetCursorPos(window, &last_mouse_x, &last_mouse_y);
+
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -266,8 +283,12 @@ int main(int argc, char** argv)
 			glfwPollEvents();
 
 			// Update camera
+			poll_keys(window, dt);
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
-			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
+			//camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
+			_player.inputMouseMovement(mouse_x - last_mouse_x, last_mouse_y - mouse_y);
+			last_mouse_x = mouse_x;
+			last_mouse_y = mouse_y;
 
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
@@ -304,8 +325,7 @@ int main(int argc, char** argv)
 			lastT = t;
 
 			// draw user interface
-			//_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
-			_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
+			_ui->updateUI(fps, false, false, glm::vec3(0, 0, 0));
 
 			// bullet
 			bulletWorld.stepSimulation(
@@ -366,13 +386,14 @@ void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointL
 		lightbox.drawShader(shader);
 	}
 
-}
 
 void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
 {
 	shader->use();
-	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	shader->setUniform("camera_world", camera.getPosition());
+	//shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
+	//shader->setUniform("camera_world", camera.getPosition());
+	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
+	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
 
 	for (int i = 0; i < dirLights.size(); i++) {
@@ -404,6 +425,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE) {
 		_strafing = false;
 	}
+}
+
+void poll_keys(GLFWwindow* window, double dt) {
+	KeyInput input;
+	input.backward = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+	input.forward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+	input.left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+	input.right = glfwGetKey(window, GLFW_KEY_D);
+	input.jump = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+	_player.inputKeys(input, dt);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)

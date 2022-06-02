@@ -37,12 +37,16 @@ private:
 
 	void renderText(std::string text, float x, float y, float scale, glm::vec3 color);
 
+	void renderLost(glm::vec3 color);
+
+	void renderWon(glm::vec3 color);
+
 public:
 
 	// constructor
 	UserInterface(string vs, string fs, int width, int height, float brightness, string fontPath);
 
-	void updateUI(int fps, bool lost, glm::vec3 color);
+	void updateUI(int fps, bool lost, bool won, glm::vec3 color);
 
 	
 };

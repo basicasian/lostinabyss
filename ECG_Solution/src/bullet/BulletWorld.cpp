@@ -34,5 +34,28 @@ void BulletWorld::deleteBullet()
     delete _world;
 }
 
+float BulletWorld::rayTestHits(glm::vec3 from, glm::vec3 to)
+{
+    btVector3 btFrom = { from.x, from.y, from.z };
+    btVector3 btTo = { to.x, to.y, to.z };
+    btCollisionWorld::ClosestRayResultCallback res(btFrom, btTo);
+    _world->rayTest(btFrom, btTo, res);
+
+    if (!res.hasHit())
+        return std::numeric_limits<float>::max();
+    else
+        return (res.m_hitPointWorld - btFrom).length();
+}
+
+void BulletWorld::removeRigidBody(btRigidBody* body)
+{
+    _world->removeRigidBody(body);
+}
+
+void BulletWorld::addRigidBody(btRigidBody* body)
+{
+    _world->addRigidBody(body);
+}
+
 
 

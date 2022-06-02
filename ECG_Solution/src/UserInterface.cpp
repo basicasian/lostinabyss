@@ -8,12 +8,15 @@ UserInterface::UserInterface(string vs, string fs, int width, int height, float 
     generateCharacterTextures();
 }
 
-void UserInterface::updateUI(int fps, bool lost, glm::vec3 color)
+void UserInterface::updateUI(int fps, bool lost, bool won, glm::vec3 color)
 {
     renderFPS(fps, color);
 
     if (lost) {
-
+        renderLost(color);
+    }
+    else if (won) {
+        renderWon(color);
     }
     else {
         renderUserinterface(color);
@@ -49,6 +52,18 @@ void UserInterface::renderUserinterface(glm::vec3 color)
 void UserInterface::renderFPS(int fps, glm::vec3 color)
 {
     renderText("FPS: " + std::to_string(fps), 0.9 * _width, 0.97 * _height, 0.0005 * _height, color);
+}
+
+void UserInterface::renderLost(glm::vec3 color) {
+
+    renderText("you failed :(",
+        0.38 * _width, 0.5 * _height, 0.002 * _height, color);
+}
+
+void UserInterface::renderWon(glm::vec3 color) {
+
+    renderText("yay, you won!",
+        0.35 * _width, 0.5 * _height, 0.002 * _height, color);
 }
 
 void UserInterface::renderText(std::string text, float x, float y, float scale, glm::vec3 color)
