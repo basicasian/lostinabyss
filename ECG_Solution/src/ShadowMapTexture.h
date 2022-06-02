@@ -35,4 +35,7 @@ public:
 
 	GLuint getDepthFBO();
 
+	void activate();
+	void resetViewPort();
+
 };

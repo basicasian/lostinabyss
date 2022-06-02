@@ -173,39 +173,6 @@ int main(int argc, char** argv)
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 
 		// -----------------------
-		// shadowmapping 
-		// create a framebuffer object for rendering the depth map
-		/*
-		GLuint depthMapFBO;
-		glGenFramebuffers(1, &depthMapFBO);
-
-		// create 2d texture, framebuffer's depth buffer: 
-		const unsigned int SHADOW_WIDTH = window_width, SHADOW_HEIGHT = window_height;
-		GLuint depthMap;
-
-		// should be done in texture (bind())
-		glGenTextures(1, &depthMap);
-		glBindTexture(GL_TEXTURE_2D, depthMap);
-
-		// from here -> new texture class
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		// for area out of range, to not show it in shadow
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-		// attach depth texture as FBO's depth buffer
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-		glDrawBuffer(GL_NONE); // no colour
-		glReadBuffer(GL_NONE);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);*/
-		// to here -> new texture class
-		
-		// -----------------------
 		
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
@@ -222,9 +189,7 @@ int main(int argc, char** argv)
 
 		// Create geometry
 		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial, depthMaterial);
-		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), woodTextureMaterial, depthMaterial);
-		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, -4.0f, 6.0f)), Geometry::createCubeGeometry(10.0f, 2.5f, 10.0f), tileTextureMaterial, depthMaterial);
-		Geometry testBox2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 6.0f)), Geometry::createCubeGeometry(2.5f, 2.5f, 2.5f), tileTextureMaterial, depthMaterial);
+		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), tileTextureMaterial, depthMaterial);
 		
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial, depthMaterial);
@@ -261,7 +226,7 @@ int main(int argc, char** argv)
 		// pinkish
 		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
 		dirLights.push_back(dirL3);
-	#pragma endregion
+		#pragma endregion
 
 		#pragma region point lights
 		PointLight pointL1(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
@@ -270,7 +235,7 @@ int main(int argc, char** argv)
 		pointLights.push_back(pointL1);
 		pointLights.push_back(pointL2);
 		pointLights.push_back(pointL3);
-	#pragma endregion
+		#pragma endregion
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -300,32 +265,20 @@ int main(int argc, char** argv)
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
+			shadowMapTexture->activate();
 
-			glViewport(0, 0, window_width, window_height);
-			glBindFramebuffer(GL_FRAMEBUFFER, shadowMapTexture -> getDepthFBO());
-			glClear(GL_DEPTH_BUFFER_BIT);
-			glActiveTexture(GL_TEXTURE0); 
-
-			testBox.drawDepth();
-			testBox2.drawDepth();
 			mainBox.drawDepth();
 			testPlatform.drawDepth();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawDepth();
 			scene.DrawDepth();
 
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-			// reset viewport 
-			glViewport(0, 0, window_width, window_height);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			shadowMapTexture->resetViewPort();
 
 			// 2. render scene as normal using the generated depth/shadow map 
 			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
-			// Render
-			testBox.draw();
-			testBox2.draw();
+			// render
 			mainBox.draw();
 			testPlatform.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));

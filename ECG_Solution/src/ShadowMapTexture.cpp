@@ -42,3 +42,20 @@ GLuint ShadowMapTexture::getDepthFBO()
 {
 	return _framebuffer;
 }
+
+void ShadowMapTexture::activate()
+{
+	glViewport(0, 0, _shadowWidth, _shadowHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER,_framebuffer);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glActiveTexture(GL_TEXTURE0);
+}
+
+void ShadowMapTexture::resetViewPort()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// reset viewport 
+	glViewport(0, 0, _shadowWidth, _shadowHeight);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
