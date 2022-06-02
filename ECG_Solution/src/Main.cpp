@@ -14,11 +14,14 @@
 #include "Material.h"
 #include "Light.h"
 #include "Texture.h"
+#include "ShadowMapTexture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
 #include "bullet/BulletWorld.h"
 #include "bullet/BulletBody.h"
 
+#include <stb_image.h>
+#include <iostream>
 
 /* --------------------------------------------- */
 // Prototypes
@@ -29,10 +32,15 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-//void setPerFrameUniforms(Shader* shader, Camera& camera, DirectionalLight& dirL, PointLight& pointL);
-void setPerFrameUniforms(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
-glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 void poll_keys(GLFWwindow* window, double dt);
+
+void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
+
+void renderQuad();
+void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
+void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
+
+glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 /* --------------------------------------------- */
 // Global variables
@@ -44,15 +52,17 @@ static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 6.0f;
 static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
+
 int _timer = 300;
 boolean _gameLost = false;
+
 int window_width, window_height, _refresh_rate;
 GLFWmonitor* monitor;
 bool fullscreen;
 float _brightness;
+
 std::vector<DirectionalLight> dirLights;
 std::vector<PointLight> pointLights;
-
 
 /* --------------------------------------------- */
 // Main
@@ -163,33 +173,43 @@ int main(int argc, char** argv)
 	{
 		// Load shader(s)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
+		// for shadow mapping
+		std::shared_ptr<Shader> depthShader = std::make_shared<Shader>("depth.vert", "depth.frag");
+		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow
+
+		// for bloom
+		std::shared_ptr<Shader> lightShader = std::make_shared<Shader>("texture.vert", "lightbox.frag");
 
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 		_player.addToWorld(bulletWorld);
 
+		// -----------------------
+		
 		// Create textures
-		std::shared_ptr<Texture> woodTexture(std::make_shared<Texture>("wood_texture.dds"));
-		std::shared_ptr<Texture> tileTexture(std::make_shared<Texture>("tiles_diffuse.dds"));
+		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle());
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle());
 
 		// Create materials
-		std::shared_ptr<Material> woodTextureMaterial(std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture));
-		std::shared_ptr<Material> tileTextureMaterial(std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture));
+		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
+		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 
-
-		std::shared_ptr<Material> catModelMaterial(std::make_shared<TextureMaterial>(textureShader));
+		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
+		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1000.0f, 0.0f)), Geometry::createCubeGeometry(0.1f, 0.1f, 0.1f), woodTextureMaterial);
+		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 
-		glm::mat4 catMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		glm::mat4 sceneMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catMat, catModelMaterial);
-		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.3f, 0.4f, 0.1f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
-		ModelLoader scene("assets/objects/scene.obj", sceneMat, catModelMaterial);
+		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
-
+		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure 
 			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
@@ -203,34 +223,40 @@ int main(int argc, char** argv)
 				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
 		}
-
-		// Initialize lights
-		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
-		//PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f), glm::vec3(1.0f, 0.4f, 0.1f));
-		PointLight pointL(glm::vec3(1.0f), glm::vec3(0.0f, 3.0f, -1.0f), glm::vec3(1.0f, 0.4f, 0.1f));
+		
+		// Initialize camera
+		// Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
 		// Initialize user interface/HUD
 		_ui = std::make_shared<UserInterface>("userinterface.vert", "userinterface.frag", window_width, window_height, _brightness, _fontpath);
 
 		// Initialize lights and put them into vector
 		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
-#pragma region directional lights
-		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, -1.0f));
-		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
-		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		dirLights.push_back(dirL1);
-		dirLights.push_back(dirL2);
-		dirLights.push_back(dirL3);
-#pragma endregion
+		#pragma region directional lights
 
-#pragma region point lights
-		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		PointLight pointL3(glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		//white
+		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		dirLights.push_back(dirL1);
+		// orangey
+		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, -1.0f));
+		dirLights.push_back(dirL2);
+		// pinkish
+		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
+		dirLights.push_back(dirL3);
+		#pragma endregion
+
+		#pragma region point lights
+		// blue
+		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 0.5f, -4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
+		// red
+		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(3.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
+		// green
+		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
 
+		#pragma endregion
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -241,11 +267,11 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
+		// shader configuration
+		quadShader -> use();
+		quadShader -> setUniform("depthMap", 0);
 		double last_mouse_x, last_mouse_y;
 		glfwGetCursorPos(window, &last_mouse_x, &last_mouse_y);
-
-		//lighting info
-		glm::vec3 lightPos(-2.0f, 10.0f, -1.0f);
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -262,28 +288,30 @@ int main(int argc, char** argv)
 			last_mouse_x = mouse_x;
 			last_mouse_y = mouse_y;
 
-			// Set per-frame uniforms
-			//setPerFrameUniforms(textureShader.get(), camera, dirL, pointL);
+			// shadowmapping
+			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
+			setPerFrameUniformsDepth(depthShader.get(), dirLights);
+			shadowMapTexture->activate();
 
-			// Render
-			mainPlatform.draw();
 
-			cat.Draw();
+			//testPlatform.drawDepth();
+			mainBox.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			cat.DrawShader(depthShader.get());
+			scene.DrawShader(depthShader.get());
+
+			shadowMapTexture->resetViewPort();
+
+			// 2. render scene as normal using the generated depth/shadow map 
+			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
+			setPerFrameUniformsLight(lightShader.get(), pointLights, lightMaterial);
+
+			// render
+			mainBox.draw();
+			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			cat.Draw();
 			scene.Draw();
-
-			//calculate lightSpaceMatrix for shadow mapping 
-			//lightSpaceMatrix "T" to calculate the matrix transformation for the lights beam
-			glm::mat4 lightProjection, lightView;
-			glm::mat4 lightSpaceMatrix;
-			float near_plane = 1.0f, far_plane = 7.5f;
-			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
-			lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-			lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-			lightSpaceMatrix = lightProjection * lightView;
-			// render scene from light's point of view
-			setPerFrameUniforms(textureShader.get(), dirLights, pointLights, lightSpaceMatrix, lightPos);
-
+			
 			double t = glfwGetTime();
 			double dt = t - lastT;
 			if ((int)floor(lastT) != (int)floor(t)) {
@@ -302,6 +330,12 @@ int main(int argc, char** argv)
 				dt, // btScalar timeStep: seconds, not milliseconds, passed since the last call 
 				1, // maxSubSteps: should generally stay at one so Bullet interpolates current values on its own
 				btScalar(1.) / btScalar(60.)); // fixedTimeStep: inversely proportional to the simulation's resolution
+
+			// render depth map to quad for visual debugging
+			quadShader->use();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
+			//renderQuad();
 
 			// Swap buffers
 			glfwSwapBuffers(window);
@@ -325,8 +359,34 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
+void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights) {
 
-void setPerFrameUniforms(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
+	depthShader->use();
+	
+	for (int i = 0; i < dirLights.size(); i++) {
+		DirectionalLight& dirL = dirLights[i];
+		depthShader->setUniform("lightSpaceMatrix", dirL._lightSpaceMatrix);
+	}
+}
+
+void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial)
+{
+	shader->use();
+	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
+	shader->setUniform("camera_world", _player.getPosition());
+	shader->setUniform("brightness", _brightness);
+
+	for (int i = 0; i < pointLights.size(); i++) {
+		PointLight& pointL = pointLights[i];
+
+		Geometry lightbox(glm::translate(glm::mat4(1.0f), pointL._position), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), lightMaterial);
+		shader->setUniform("lightColor", pointL._color);
+		lightbox.drawShader(shader);
+	}
+}
+
+
+void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
 {
 	shader->use();
 	//shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
@@ -334,19 +394,18 @@ void setPerFrameUniforms(Shader* shader, std::vector<DirectionalLight> dirLights
 	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
 	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
-	shader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
-	shader->setUniform("lightPos", lightPos);
 
 	for (int i = 0; i < dirLights.size(); i++) {
 		DirectionalLight& dirL = dirLights[i];
-		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL.color);
-		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL.direction);
+		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL._color);
+		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL._direction);
+		shader->setUniform("lightSpaceMatrix", dirL._lightSpaceMatrix);
 	}
 	for (int i = 0; i < pointLights.size(); i++) {
 		PointLight& pointL = pointLights[i];
-		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL.color);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL.position);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL.attenuation);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL._color);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL._position);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL._attenuation);
 	}
 }
 
@@ -550,3 +609,33 @@ glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up)
 	return viewMatrix;
 }
 
+// renderQuad() renders a 1x1 XY quad in NDC
+// -----------------------------------------
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+	if (quadVAO == 0)
+	{
+		float quadVertices[] = {
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+}
