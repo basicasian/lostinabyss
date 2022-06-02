@@ -34,7 +34,7 @@ uniform struct PointLight {
 	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 3
+#define NR_DIR_LIGHTS 1
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
 
@@ -128,7 +128,7 @@ void main() {
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
-	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
+	// color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights
 	// add point light contribution
@@ -136,7 +136,5 @@ void main() {
 	color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
       
-
-
 }
 

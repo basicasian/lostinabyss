@@ -31,11 +31,13 @@ static std::string FormatDebugOutput(GLenum source, GLenum type, GLuint id, GLen
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
+void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 void renderQuad();
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
+
+void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
 
 /* --------------------------------------------- */
 // Global variables
@@ -169,6 +171,9 @@ int main(int argc, char** argv)
 		std::shared_ptr<Shader> depthShader = std::make_shared<Shader>("depth.vert", "depth.frag");
 		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow
 
+		// for bloom
+		std::shared_ptr<Shader> lightShader = std::make_shared<Shader>("texture.vert", "lightbox.frag");
+
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 
@@ -184,19 +189,20 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 
-		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
+
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
+		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial, depthMaterial);
-		Geometry testPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(5.0f, 1.0f, 5.0f), tileTextureMaterial, depthMaterial);
-		
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+	
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial, depthMaterial);
+		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
 		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial, depthMaterial);
+		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
 		
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure
@@ -212,9 +218,6 @@ int main(int argc, char** argv)
 		// Initialize lights and put them into vector
 		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
 		#pragma region directional lights
-
-		// lighting info
-		glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
 
 		//white
 		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
@@ -234,10 +237,12 @@ int main(int argc, char** argv)
 		// red
 		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
-		// turquoise
-		PointLight pointL3(glm::vec3(2.0f, 5.0f, 4.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// green
+		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
+
 		#pragma endregion
+
 
 		// Render loop
 		float lastT = float(glfwGetTime());
@@ -269,20 +274,21 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->activate();
 
-			mainBox.drawDepth();
-			testPlatform.drawDepth();
+
+			//testPlatform.drawDepth();
+			mainBox.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
-			cat.DrawDepth();
-			scene.DrawDepth();
+			cat.DrawShader(depthShader.get());
+			scene.DrawShader(depthShader.get());
 
 			shadowMapTexture->resetViewPort();
 
 			// 2. render scene as normal using the generated depth/shadow map 
-			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
+			setPerFrameUniformsTexture(textureShader.get(), camera, dirLights, pointLights);
+			setPerFrameUniformsLight(lightShader.get(), camera, pointLights, lightMaterial);
 
 			// render
 			mainBox.draw();
-			testPlatform.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
@@ -345,7 +351,24 @@ void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight>
 	}
 }
 
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
+void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial)
+{
+	shader->use();
+	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
+	shader->setUniform("camera_world", camera.getPosition());
+	shader->setUniform("brightness", _brightness);
+
+	for (int i = 0; i < pointLights.size(); i++) {
+		PointLight& pointL = pointLights[i];
+
+		Geometry lightbox(glm::translate(glm::mat4(1.0f), pointL._position), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), lightMaterial);
+		shader->setUniform("lightColor", pointL._color);
+		lightbox.drawShader(shader);
+	}
+
+}
+
+void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
 {
 	shader->use();
 	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());

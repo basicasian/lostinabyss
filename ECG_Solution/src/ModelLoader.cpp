@@ -209,8 +209,8 @@ unsigned int ModelLoader::TextureFromFile(const char* path, const string& direct
 
 
 
-ModelLoader::ModelLoader(char* path, glm::mat4 modelMatrix, std::shared_ptr<Material> material, std::shared_ptr<Material> depthMaterial)
-    : _modelMatrix(modelMatrix), _material(material), _depthMaterial(depthMaterial)
+ModelLoader::ModelLoader(char* path, glm::mat4 modelMatrix, std::shared_ptr<Material> material)
+    : _modelMatrix(modelMatrix), _material(material)
 {
     loadModel(path);
 }
@@ -227,9 +227,8 @@ void ModelLoader::Draw()
         meshes[i].Draw(shader);
 }
 
-void ModelLoader::DrawDepth()
+void ModelLoader::DrawShader(Shader* shader)
 {
-    Shader* shader = _depthMaterial->getShader();
     shader->use();
 
     shader->setUniform("modelMatrix", _modelMatrix);

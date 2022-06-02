@@ -33,7 +33,6 @@ private:
     std::vector<MeshTexture> textures_loaded;
     glm::mat4 _modelMatrix;
     std::shared_ptr<Material> _material;
-    std::shared_ptr<Material> _depthMaterial;
 
     //loads model via assimp and stores meshes in meshes vector
     void loadModel(string path);
@@ -54,11 +53,11 @@ public:
 
     unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 
-    ModelLoader(char* path, glm::mat4 modelMatrix, std::shared_ptr<Material> material, std::shared_ptr<Material> depthMaterial);
+    ModelLoader(char* path, glm::mat4 modelMatrix, std::shared_ptr<Material> material);
 
     void Draw();
 
-    void DrawDepth();
+    void DrawShader(Shader* shader);
 
     /*!
      * Sets the model matrix to the parameter

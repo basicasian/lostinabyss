@@ -20,7 +20,6 @@ out VertexData {
 uniform mat4 modelMatrix;
 uniform mat4 viewProjMatrix;
 uniform mat3 normalMatrix;
-uniform mat4 lightSpaceMatrix;
 
 void main() {
     vec4 position_world_ = modelMatrix * vec4(position, 1);

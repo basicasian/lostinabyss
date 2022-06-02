@@ -6,8 +6,8 @@
 
 #include "Geometry.h"
 
-Geometry::Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material, std::shared_ptr<Material> depthMaterial)
-	: _elements(data.indices.size()), _modelMatrix(modelMatrix), _material(material), _depthMaterial(depthMaterial)
+Geometry::Geometry(glm::mat4 modelMatrix, GeometryData& data, std::shared_ptr<Material> material)
+	: _elements(data.indices.size()), _modelMatrix(modelMatrix), _material(material)
 {
 	// create VAO
 	glGenVertexArrays(1, &_vao);
@@ -72,9 +72,9 @@ void Geometry::draw()
 	glBindVertexArray(0);
 }
 
-void Geometry::drawDepth()
+void Geometry::drawShader(Shader* shader)
 {
-	Shader* shader = _depthMaterial->getShader();
+	// Shader* shader = _depthMaterial->getShader();
 	shader->use();
 
 	shader->setUniform("modelMatrix", _modelMatrix);
