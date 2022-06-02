@@ -78,7 +78,7 @@ vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuseC, float diffuseF, vec3 specularC
 	return (diffuseF * diffuseC * max(0, dot(n, l)) + specularF * specularC * pow(max(0, dot(r, v)), alpha)) * att; 
 }*/
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -92,11 +92,14 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // get depth of current fragment from light's perspective
     float currentDepth = projCoords.z;
 
+	 // calculate bias to prevent shadow acne/ stripes  (based on depth map resolution and slope)
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+	
 	// check whether current frag pos is in shadow
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
 	/*
-    // calculate bias (based on depth map resolution and slope)
+   
     vec3 normal = normalize(vert.normal_world);
     vec3 lightDir = normalize(lightPos - vert.position_world);
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
@@ -130,12 +133,13 @@ void main() {
 	vec3 texColor = texture(diffuseTexture, vert.uv).rgb;
 	color = vec4(texColor * materialCoefficients.x, 1); // ambient
 		
-	// calculate shadow
-	float shadow = ShadowCalculation(vert.FragPosLightSpace);  
+	
 
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
+	// calculate shadow
+	float shadow = ShadowCalculation(vert.FragPosLightSpace, normal, -dirLights[i].direction);  
 	color.rgb += brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0), shadow);
 	}
 	// phase 2: Point lights
