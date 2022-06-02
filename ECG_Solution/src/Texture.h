@@ -27,6 +27,7 @@ public:
 	 * @param file: path to the texture file (a DSS image)
 	 */
 	Texture(std::string file, GLuint depthMap);
+
 	~Texture();
 		 	 
 	/*!

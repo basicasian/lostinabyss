@@ -1,22 +1,38 @@
+
 #pragma once
 
-#include "Texture.h"
-/*
-class ShadowMapTexture : public Texture
-{
 
-private:
+#include <string>
+#include <GL/glew.h>
+#include "Utils.h"
+
+/*!
+ * depth map texture for shadow mapping
+ */
+class ShadowMapTexture
+{
+protected:
+
+	GLuint _framebuffer = -1;
+
+	GLuint _handle;
+
 	GLuint _shadowWidth;
 	GLuint _shadowHeight;
-	GLuint _frameBuffer;
 
 public:
 
-	//Creates a shadow map texture referencing the frame buffer
-	
-	ShadowMapTexture(GLuint shadowWidth, GLuint shadowHeight, GLuint frameBuffer);
+	/*!
+	 * Creates a shadow depth map texture
+	 * @param width: shadowmap width
+	 * @param height: shadowmap height
+	 */
+	ShadowMapTexture(GLuint shadowWidth, GLuint shadowHeight);
 
-	// create a 2d texture and bind texture to frame buffer
-	 
-	void create();
-};*/
+	~ShadowMapTexture();
+
+	GLuint getHandle();
+
+	GLuint getDepthFBO();
+
+};

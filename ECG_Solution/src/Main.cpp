@@ -13,6 +13,7 @@
 #include "Material.h"
 #include "Light.h"
 #include "Texture.h"
+#include "ShadowMapTexture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
 #include "bullet/BulletWorld.h"
@@ -174,14 +175,19 @@ int main(int argc, char** argv)
 		// -----------------------
 		// shadowmapping 
 		// create a framebuffer object for rendering the depth map
+		/*
 		GLuint depthMapFBO;
 		glGenFramebuffers(1, &depthMapFBO);
 
 		// create 2d texture, framebuffer's depth buffer: 
 		const unsigned int SHADOW_WIDTH = window_width, SHADOW_HEIGHT = window_height;
 		GLuint depthMap;
+
+		// should be done in texture (bind())
 		glGenTextures(1, &depthMap);
 		glBindTexture(GL_TEXTURE_2D, depthMap);
+
+		// from here -> new texture class
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -196,13 +202,16 @@ int main(int argc, char** argv)
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 		glDrawBuffer(GL_NONE); // no colour
 		glReadBuffer(GL_NONE);
-		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-
+		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);*/
+		// to here -> new texture class
+		
 		// -----------------------
 		
 		// Create textures
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", depthMap);
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", depthMap);
+		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
+
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle());
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle());
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
@@ -292,8 +301,8 @@ int main(int argc, char** argv)
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 
-			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+			glViewport(0, 0, window_width, window_height);
+			glBindFramebuffer(GL_FRAMEBUFFER, shadowMapTexture -> getDepthFBO());
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glActiveTexture(GL_TEXTURE0); 
 
@@ -308,7 +317,7 @@ int main(int argc, char** argv)
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			// reset viewport 
-			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+			glViewport(0, 0, window_width, window_height);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// 2. render scene as normal using the generated depth/shadow map 
@@ -346,7 +355,7 @@ int main(int argc, char** argv)
 			// render depth map to quad for visual debugging
 			quadShader->use();
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, depthMap);
+			glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
 			//renderQuad();
 
 			// Swap buffers
