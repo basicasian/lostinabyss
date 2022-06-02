@@ -227,6 +227,16 @@ void ModelLoader::Draw()
         meshes[i].Draw(shader);
 }
 
+void ModelLoader::DrawShader(Shader* shader)
+{
+    shader->use();
+
+    shader->setUniform("modelMatrix", _modelMatrix);
+
+    for (unsigned int i = 0; i < meshes.size(); i++)
+        meshes[i].Draw(shader);
+}
+
 void ModelLoader::SetModelMatrix(glm::mat4 modelMatrix)
 {
     _modelMatrix = modelMatrix;

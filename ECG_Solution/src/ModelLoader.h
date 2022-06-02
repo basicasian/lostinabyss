@@ -54,7 +54,10 @@ public:
     unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
 
     ModelLoader(char* path, glm::mat4 modelMatrix, std::shared_ptr<Material> material);
+
     void Draw();
+
+    void DrawShader(Shader* shader);
 
     /*!
      * Sets the model matrix to the parameter
