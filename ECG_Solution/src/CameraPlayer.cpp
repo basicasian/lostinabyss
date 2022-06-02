@@ -4,7 +4,6 @@ CameraPlayer::CameraPlayer(glm::vec3 position, float horDeg, float vertDeg) :
     _front(glm::vec3(0.0f, 0.0f, -1.0f)),
     _worldUp(glm::vec3(0.0f, 1.0f, 0.0f)),
     _movementSpeed(_SPEED),
-    _flyspeed(_FLYSPEED),
     _mouseSensitivity(_SENSITIVITY)
 {
     _position = position;
@@ -18,7 +17,6 @@ CameraPlayer::CameraPlayer(float posX, float posY, float posZ, float horDeg, flo
     _front(glm::vec3(0.0f, 0.0f, -1.0f)),
     _worldUp(glm::vec3(0.0f, 1.0f, 0.0f)),
     _movementSpeed(_SPEED),
-    _flyspeed(_FLYSPEED),
     _mouseSensitivity(_SENSITIVITY)
 {
     _physicsWorld = nullptr;
@@ -146,11 +144,6 @@ void CameraPlayer::inputMouseMovement(double xoffset, double yoffset)
     updateCameraVectors();
 }
 
-bool CameraPlayer::getWon()
-{
-    return _won;
-}
-
 void CameraPlayer::addToWorld(BulletWorld& physicsWorld)
 {
     if (_physicsWorld)
@@ -163,8 +156,6 @@ void CameraPlayer::addToWorld(BulletWorld& physicsWorld)
 
 void CameraPlayer::moveTo(glm::vec3 newLocation)
 {
-    _won = false;
-    
     btTransform transform;
     _motionState->getWorldTransform(transform);
 

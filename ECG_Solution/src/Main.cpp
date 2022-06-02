@@ -43,7 +43,7 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static float _zoom = 6.0f;
-static CameraPlayer _player(glm::vec3(0.0f, 2.0f, 0.0f));
+static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 int _timer = 300;
 boolean _gameLost = false;
 int window_width, window_height, _refresh_rate;
@@ -169,16 +169,16 @@ int main(int argc, char** argv)
 		_player.addToWorld(bulletWorld);
 
 		// Create textures
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("wood_texture.dds");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("tiles_diffuse.dds");
+		std::shared_ptr<Texture> woodTexture(std::make_shared<Texture>("wood_texture.dds"));
+		std::shared_ptr<Texture> tileTexture(std::make_shared<Texture>("tiles_diffuse.dds"));
 
 
 		// Create materials
-		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture);
-		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture);
+		std::shared_ptr<Material> woodTextureMaterial(std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.1f), 2.0f, woodTexture));
+		std::shared_ptr<Material> tileTextureMaterial(std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.7f, 0.3f), 8.0f, tileTexture));
 
 
-		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+		std::shared_ptr<Material> catModelMaterial(std::make_shared<TextureMaterial>(textureShader));
 
 		// Create geometry
 		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
@@ -195,15 +195,13 @@ int main(int argc, char** argv)
 			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
 			string name(mesh._aiMesh->mName.C_Str());
 			if (!(name.compare("hull"))) {
+				//std::cout << "this is hull" << std::endl;
 				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
 			}
 			else {
 				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
 		}
-
-		// Initialize camera
-		//Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
 		// Initialize lights
 		DirectionalLight dirL(glm::vec3(0.8f), glm::vec3(0.0f, -1.0f, -1.0f));
@@ -296,8 +294,7 @@ int main(int argc, char** argv)
 			lastT = t;
 
 			// draw user interface
-			//_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
-			_ui->updateUI(fps, false, glm::vec3(0, 0, 0));
+			_ui->updateUI(fps, false, false, glm::vec3(0, 0, 0));
 
 			// bullet
 			bulletWorld.stepSimulation(

@@ -9,10 +9,10 @@
 // camera default values 
 const float _HORDEG = -90.0f;
 const float _VERTDEG = 0.0f;
-const float _SPEED = 25.0f;
+const float _SPEED = 15.0f;
 const float _MAX_JUMP = 125.0f;
 const float _FLYSPEED = 20.0f;
-const float _SENSITIVITY = 0.08f;
+const float _SENSITIVITY = 0.07f;
 const float _SIZE = 1;
 const float _MASS = 10;
 const float _FRICTION = 1.5;
@@ -40,13 +40,8 @@ private:
     float _horizonDegree;
     float _verticalDegree;
     // camera options
-    float _flyspeed;
     float _movementSpeed;
     float _mouseSensitivity;
-
-    bool _won = false;
-
-    glm::vec3 _jumpImpulse;
 
     glm::mat4 _projMatrix;
 
@@ -84,8 +79,6 @@ public:
 
     // receive input when mouse is moved
     void inputMouseMovement(double xoffset, double yoffset);
-
-    bool getWon();
 
     // Inherited via Object
     virtual void addToWorld(BulletWorld& physicsWorld);
