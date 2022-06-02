@@ -55,6 +55,8 @@ public:
 	 */
 	virtual void setUniforms();
 
+	virtual void bindTexture(GLuint depthMap);
+
 	void setShader(std::shared_ptr<Shader> shader);
 };
 
@@ -69,6 +71,11 @@ protected:
 	 * The diffuse texture of this material
 	 */
 	std::shared_ptr<Texture> _diffuseTexture;
+
+	/*!
+	 * The shadow texture of this material for shadowmapping
+	 */
+	std::shared_ptr<Texture> _shadowTexture;
 
 public:
 	/*!
@@ -88,4 +95,5 @@ public:
 	 * Set's this material's parameters as uniforms in the shader
 	 */
 	virtual void setUniforms();
+
 };

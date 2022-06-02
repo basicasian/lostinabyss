@@ -16,7 +16,7 @@ struct DirectionalLight {
 	 * Default constructor
 	 */
 	DirectionalLight() {
-		enabled = false;
+		_enabled = false;
 	}
 
 	/*!
@@ -27,23 +27,37 @@ struct DirectionalLight {
 	 * @param enabled: if the light is enabled
 	 */
 	DirectionalLight(glm::vec3 color, glm::vec3 direction, bool enabled = true)
-		: color(color), direction(glm::normalize(direction)), enabled(enabled)
-	{}
+		: _color(color), _direction(glm::normalize(direction)), _enabled(enabled)
+	{
+		// 1. render depth of scene to texture (from light's perspective)
+		glm::vec3 lightPos = glm::vec3(0.f, 50.f, 0.f);
+		glm::mat4 lightProjection, lightView;
+		float near_plane = -10.0f, far_plane = 70.0f;
+		lightProjection = glm::ortho(-20.0f, 40.0f, -40.0f, 20.0f, near_plane, far_plane);
+
+		lightView = glm::lookAt(lightPos, lightPos + _direction, glm::vec3(0.0, 0.0, 1.0));
+		_lightSpaceMatrix = lightProjection * lightView;
+	}
 
 	/*!
 	 * If the light is enabled
 	 */
-	bool enabled;
+	bool _enabled;
 
 	/*!
 	 * Color of the light
 	 */
-	glm::vec3 color;
+	glm::vec3 _color;
 
 	/*!
 	 * Direction of the light
 	 */
-	glm::vec3 direction;
+	glm::vec3 _direction;
+
+	/*!
+	 * Light space matrix for shadow calculation
+	 */
+	glm::mat4 _lightSpaceMatrix;
 };
 
 /*!
@@ -54,7 +68,7 @@ struct PointLight {
 	 * Default constructor
 	 */
 	PointLight() {
-		enabled = false;
+		_enabled = false;
 	}
 
 	/*!
@@ -66,26 +80,26 @@ struct PointLight {
 	 * @param enabled: if the light is enabled
 	 */
 	PointLight(glm::vec3 color, glm::vec3 position, glm::vec3 attenuation, bool enabled = true)
-		: color(color), position(position), attenuation(attenuation), enabled(enabled)
+		: _color(color), _position(position), _attenuation(attenuation), _enabled(enabled)
 	{}
 
 	/*!
 	 * If the light is enabled
 	 */
-	bool enabled;
+	bool _enabled;
 
 	/*!
 	 * Color of the light
 	 */
-	glm::vec3 color;
+	glm::vec3 _color;
 
 	/*!
 	 * Position of the light
 	 */
-	glm::vec3 position;
+	glm::vec3 _position;
 
 	/*!
 	 * The light's attenuation (x = constant, y = linear, z = quadratic)
 	 */
-	glm::vec3 attenuation;
+	glm::vec3 _attenuation;
 };
