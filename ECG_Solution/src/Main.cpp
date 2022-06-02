@@ -31,11 +31,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos);
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
 void renderQuad();
-unsigned int loadTexture(char const* path);
+void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
 
 /* --------------------------------------------- */
 // Global variables
@@ -57,9 +56,6 @@ float _brightness;
 
 std::vector<DirectionalLight> dirLights;
 std::vector<PointLight> pointLights;
-
-
-
 
 /* --------------------------------------------- */
 // Main
@@ -170,13 +166,10 @@ int main(int argc, char** argv)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
 		// for shadow mapping
 		std::shared_ptr<Shader> depthShader = std::make_shared<Shader>("depth.vert", "depth.frag");
-		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag");
+		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow
 
 		// Initialize bullet world
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
-
-
-		unsigned int testTexture = loadTexture("assets/textures/wood.png");
 
 		// -----------------------
 		// shadowmapping 
@@ -248,13 +241,16 @@ int main(int argc, char** argv)
 
 		// lighting info
 		glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
-		//glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
 
 		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
-		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		dirLights.push_back(dirL1);
+
+		// orangey
+		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, 0.5f));
 		dirLights.push_back(dirL2);
+		
+		// pinkish
+		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
 		dirLights.push_back(dirL3);
 	#pragma endregion
 
@@ -292,26 +288,30 @@ int main(int argc, char** argv)
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			camera.update(int(mouse_x), int(mouse_y), _zoom, _dragging, _strafing);
 
-			// 1. render depth of scene to texture (from light's perspective)
-			glm::mat4 lightProjection, lightView;
 			glm::mat4 lightSpaceMatrix;
+
+			/*
+
+			glm::mat4 lightProjection, lightView;
+			
 			float near_plane = -10.0f, far_plane = 70.0f;
-			// note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
-			// lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
 			lightProjection = glm::ortho(-20.0f, 40.0f, -40.0f, 20.0f, near_plane, far_plane);
 
+			// second parameter is lightdirection -> has to be adapated for several lights
 			lightView = glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0, 0.0, 1.0));
-			// lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 			lightSpaceMatrix = lightProjection * lightView;
 
 			depthShader->use();
 			depthShader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
+			*/
+			// shadowmapping
+			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
+			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 
 			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glActiveTexture(GL_TEXTURE0); 
-			glBindTexture(GL_TEXTURE_2D, testTexture);
 
 			testBox.drawDepth();
 			testBox2.drawDepth();
@@ -323,15 +323,12 @@ int main(int argc, char** argv)
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-			// reset viewport
+			// reset viewport 
 			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// 2. render scene as normal using the generated depth/shadow map 
-			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights, lightSpaceMatrix, lightPos);
+			setPerFrameUniforms(textureShader.get(), camera, dirLights, pointLights);
 
 			// Render
 			testBox.draw();
@@ -364,11 +361,9 @@ int main(int argc, char** argv)
 
 			// render depth map to quad for visual debugging
 			quadShader->use();
-			quadShader -> setUniform("near_plane", near_plane);
-			quadShader -> setUniform("far_plane", far_plane);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, depthMap);
-			// renderQuad();
+			//renderQuad();
 
 			// Swap buffers
 			glfwSwapBuffers(window);
@@ -392,7 +387,15 @@ int main(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
+void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights) {
 
+	depthShader->use();
+	
+	for (int i = 0; i < dirLights.size(); i++) {
+		DirectionalLight& dirL = dirLights[i];
+		depthShader->setUniform("lightSpaceMatrix", dirL._lightSpaceMatrix);
+	}
+}
 
 void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
 {
@@ -401,40 +404,17 @@ void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<Directional
 	shader->setUniform("camera_world", camera.getPosition());
 	shader->setUniform("brightness", _brightness);
 
-	// shader->setUniform("shadowTexture", 1);
-
 	for (int i = 0; i < dirLights.size(); i++) {
 		DirectionalLight& dirL = dirLights[i];
-		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL.color);
-		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL.direction);
+		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL._color);
+		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL._direction);
+		shader->setUniform("lightSpaceMatrix", dirL._lightSpaceMatrix);
 	}
 	for (int i = 0; i < pointLights.size(); i++) {
 		PointLight& pointL = pointLights[i];
-		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL.color);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL.position);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL.attenuation);
-	}
-}
-
-void setPerFrameUniforms(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights, glm::mat4 lightSpaceMatrix, glm::vec3 lightPos)
-{
-	shader->use();
-	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	shader->setUniform("camera_world", camera.getPosition());
-	shader->setUniform("brightness", _brightness);
-	shader->setUniform("lightSpaceMatrix", lightSpaceMatrix);
-	shader->setUniform("lightPos", lightPos);
-
-	for (int i = 0; i < dirLights.size(); i++) {
-		DirectionalLight& dirL = dirLights[i];
-		shader->setUniform("dirLights[" + std::to_string(i) + "].color", dirL.color);
-		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL.direction);
-	}
-	for (int i = 0; i < pointLights.size(); i++) {
-		PointLight& pointL = pointLights[i];
-		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL.color);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL.position);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL.attenuation);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL._color);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL._position);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL._attenuation);
 	}
 }
 
@@ -626,45 +606,6 @@ glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up)
 	};
 
 	return viewMatrix;
-}
-
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
-unsigned int loadTexture(char const* path)
-{
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-	if (data)
-	{
-		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
-
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT); // for this tutorial: use GL_CLAMP_TO_EDGE to prevent semi-transparent borders. Due to interpolation it takes texels from next repeat 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, format == GL_RGBA ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-	}
-	else
-	{
-		std::cout << "Texture failed to load at path: " << path << std::endl;
-		stbi_image_free(data);
-	}
-
-	return textureID;
 }
 
 // renderQuad() renders a 1x1 XY quad in NDC

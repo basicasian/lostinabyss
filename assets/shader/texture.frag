@@ -13,12 +13,8 @@ in VertexData {
 } vert;
 
 out vec4 color;
-
 uniform float brightness;
-
 uniform vec3 camera_world;
-
-uniform vec3 lightPos;
 
 uniform vec3 materialCoefficients; // x = ambient, y = diffuse, z = specular 
 uniform float specularAlpha;
@@ -36,13 +32,14 @@ uniform struct PointLight {
 	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 1
+#define NR_DIR_LIGHTS 3
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
+uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
+
 #define NR_POINT_LIGHTS 3
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
-
-vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation, float shadow) {
+vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
 	
 	// diffuse shading
 	float diff = max(dot(normal, lightDir), 0.0);
@@ -61,11 +58,7 @@ vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffus
 	}
 	
 	// material colour * light colour * shading
-	if (attenuate) {
-		return (diffuseF * (diffuseC * diff) + specularF * (specularC * spec)) * att;
-	} else {
-		return (1-shadow) * (diffuseF * (diffuseC * diff) + specularF * (specularC * spec)) * att;
-	}
+	return (diffuseF * (diffuseC * diff) + specularF * (specularC * spec)) * att;
 }
 
 /*
@@ -127,20 +120,18 @@ void main() {
 	
 	vec3 texColor = texture(diffuseTexture, vert.uv).rgb;
 	color = vec4(texColor * materialCoefficients.x, 1); // ambient
-		
-	
 
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// calculate shadow
 	float shadow = ShadowCalculation(vert.FragPosLightSpace, normal, -dirLights[i].direction);  
-	color.rgb += brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0), shadow);
+	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights
 	// add point light contribution
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
-	//color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation, shadow);
+	color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
       
 
