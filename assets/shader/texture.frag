@@ -128,7 +128,7 @@ void main() {
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
-	// color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
+	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights
 	// add point light contribution

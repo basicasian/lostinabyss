@@ -34,11 +34,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void poll_keys(GLFWwindow* window, double dt);
 
-void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
+void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
 
 void renderQuad();
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
-void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
+void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
 
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
 		}
 		
 		// Initialize camera
-		Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
+		// Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
 		// Initialize user interface/HUD
 		_ui = std::make_shared<UserInterface>("userinterface.vert", "userinterface.frag", window_width, window_height, _brightness, _fontpath);
@@ -257,7 +257,6 @@ int main(int argc, char** argv)
 
 		#pragma endregion
 
-
 		// Render loop
 		float lastT = float(glfwGetTime());
 		float dt = 0.0f;
@@ -267,13 +266,11 @@ int main(int argc, char** argv)
 		double lastTime = glfwGetTime();
 		int fps = 0;
 
-
 		// shader configuration
 		quadShader -> use();
 		quadShader -> setUniform("depthMap", 0);
 		double last_mouse_x, last_mouse_y;
 		glfwGetCursorPos(window, &last_mouse_x, &last_mouse_y);
-
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -305,8 +302,8 @@ int main(int argc, char** argv)
 			shadowMapTexture->resetViewPort();
 
 			// 2. render scene as normal using the generated depth/shadow map 
-			setPerFrameUniformsTexture(textureShader.get(), camera, dirLights, pointLights);
-			setPerFrameUniformsLight(lightShader.get(), camera, pointLights, lightMaterial);
+			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
+			setPerFrameUniformsLight(lightShader.get(), pointLights, lightMaterial);
 
 			// render
 			mainBox.draw();
@@ -371,11 +368,11 @@ void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight>
 	}
 }
 
-void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial)
+void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial)
 {
 	shader->use();
-	shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	shader->setUniform("camera_world", camera.getPosition());
+	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
+	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
 
 	for (int i = 0; i < pointLights.size(); i++) {
@@ -385,9 +382,10 @@ void setPerFrameUniformsLight(Shader* shader, Camera& camera, std::vector<PointL
 		shader->setUniform("lightColor", pointL._color);
 		lightbox.drawShader(shader);
 	}
+}
 
 
-void setPerFrameUniformsTexture(Shader* shader, Camera& camera, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
+void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
 {
 	shader->use();
 	//shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
