@@ -244,9 +244,10 @@ int main(int argc, char** argv)
 		#pragma region directional lights
 
 		// lighting info
-		glm::vec3 lightPos(0.0f, -1.0f, -1.0f);
+		glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
+		//glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
 
-		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), lightPos);
+		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		DirectionalLight dirL2(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.5f));
 		DirectionalLight dirL3(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 		dirLights.push_back(dirL1);
@@ -293,10 +294,10 @@ int main(int argc, char** argv)
 			glm::mat4 lightSpaceMatrix;
 			float near_plane = -10.0f, far_plane = 70.0f;
 			// note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene
-			//lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
-			lightProjection = glm::ortho(-10.0f, 1.0f, -10.0f, 1.0f, near_plane, far_plane);
+			// lightProjection = glm::perspective(glm::radians(45.0f), (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
+			lightProjection = glm::ortho(-20.0f, 40.0f, -40.0f, 20.0f, near_plane, far_plane);
 
-			lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+			lightView = glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0, 0.0, 1.0));
 			// lightView = lookAtView(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
 			lightSpaceMatrix = lightProjection * lightView;
 
@@ -313,14 +314,14 @@ int main(int argc, char** argv)
 			testBox2.drawDepth();
 			mainBox.drawDepth();
 			testPlatform.drawDepth();
-			cat.DrawDepth();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			cat.DrawDepth();
 			scene.DrawDepth();
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			// reset viewport
-			glViewport(0, 0, window_width, window_height);
+			glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			// 2. render scene as normal using the generated depth/shadow map 
@@ -334,8 +335,8 @@ int main(int argc, char** argv)
 			testBox2.draw();
 			mainBox.draw();
 			testPlatform.draw();
-			cat.Draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			cat.Draw();
 			scene.Draw();
 			
 			double t = glfwGetTime();
@@ -360,6 +361,8 @@ int main(int argc, char** argv)
 
 			// render depth map to quad for visual debugging
 			quadShader->use();
+			quadShader -> setUniform("near_plane", near_plane);
+			quadShader -> setUniform("far_plane", far_plane);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, depthMap);
 			// renderQuad();

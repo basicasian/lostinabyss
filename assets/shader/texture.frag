@@ -43,6 +43,7 @@ uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 
 vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation, float shadow) {
+	
 	// diffuse shading
 	float diff = max(dot(normal, lightDir), 0.0);
 
