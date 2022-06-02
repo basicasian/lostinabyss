@@ -232,10 +232,10 @@ int main(int argc, char** argv)
 
 		#pragma region point lights
 		// blue
-		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 0.5f, -4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
 		// red
-		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(3.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// green
 		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
