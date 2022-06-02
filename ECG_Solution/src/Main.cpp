@@ -216,24 +216,26 @@ int main(int argc, char** argv)
 		// lighting info
 		glm::vec3 lightPos(0.0f, 50.0f, 0.0f);
 
+		//white
 		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		dirLights.push_back(dirL1);
-
 		// orangey
 		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, -1.0f));
 		dirLights.push_back(dirL2);
-		
 		// pinkish
 		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
 		dirLights.push_back(dirL3);
 		#pragma endregion
 
 		#pragma region point lights
-		PointLight pointL1(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		PointLight pointL2(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		PointLight pointL3(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// blue
+		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 2.5f, 10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
+		// red
+		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(6.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
+		// turquoise
+		PointLight pointL3(glm::vec3(2.0f, 5.0f, 4.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
 		#pragma endregion
 
