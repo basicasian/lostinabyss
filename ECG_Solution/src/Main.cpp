@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
