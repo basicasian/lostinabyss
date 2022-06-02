@@ -96,30 +96,23 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
 	
 	// check whether current frag pos is in shadow
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-
-	/*
-   
-    vec3 normal = normalize(vert.normal_world);
-    vec3 lightDir = normalize(lightPos - vert.position_world);
-    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
-    // check whether current frag pos is in shadow
     // float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-    // PCF
+
+    // PCF (for smoother shadows)
+	// sample the surrounding texels of the depth map and average the results
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    vec2 texelSize = 1.0 / textureSize(shadowTexture, 0);
     for(int x = -1; x <= 1; ++x)
     {
         for(int y = -1; y <= 1; ++y)
         {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            float pcfDepth = texture(shadowTexture, projCoords.xy + vec2(x, y) * texelSize).r; 
+			// check whether current frag pos is in shadow
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
     shadow /= 9.0;
-    
-    */
-        
+            
 	// keep the shadow at 0.0 when outside the far_plane region of the light's frustum.
     if (projCoords.z > 1.0)
     shadow = 0.0;
