@@ -40,7 +40,6 @@ void ModelLoader::processNode(aiNode* node, const aiScene* scene, aiMatrix4x4 pa
         //process mesh and then store it into the meshes vector
         //processmesh returnt kopie und daten werden vlt freigegeben
         meshes.push_back(processMesh(mesh, scene, transform));
-        std::cout << mesh->mNumVertices << std::endl;
     }
     //recursively process the children nodes
      for (unsigned int i = 0; i < node->mNumChildren; i++)

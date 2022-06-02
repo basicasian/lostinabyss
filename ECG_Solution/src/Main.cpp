@@ -181,18 +181,19 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> catModelMaterial(std::make_shared<TextureMaterial>(textureShader));
 
 		// Create geometry
-		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainPlatform(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 1000.0f, 0.0f)), Geometry::createCubeGeometry(0.1f, 0.1f, 0.1f), woodTextureMaterial);
 
-		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
-		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		glm::mat4 catMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
+		glm::mat4 sceneMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		ModelLoader cat("assets/objects/cat/cat.obj", catMat, catModelMaterial);
+		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.3f, 0.4f, 0.1f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
+		ModelLoader scene("assets/objects/scene.obj", sceneMat, catModelMaterial);
 
 
 		for (const auto& mesh : scene.getMeshes()) {
 			// store bullet body in a list or another data structure 
 			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
+			std::cout << mesh._aiMesh->mNumVertices << std::endl;
 			string name(mesh._aiMesh->mName.C_Str());
 			if (!(name.compare("hull"))) {
 				//std::cout << "this is hull" << std::endl;
