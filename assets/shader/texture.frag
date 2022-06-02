@@ -19,7 +19,9 @@ uniform vec3 camera_world;
 uniform vec3 materialCoefficients; // x = ambient, y = diffuse, z = specular 
 uniform float specularAlpha;
 uniform sampler2D diffuseTexture;
+
 uniform sampler2D shadowTexture;
+uniform mat4 lightSpaceMatrix;
 
 uniform struct DirectionalLight {
 	vec3 color;
@@ -125,7 +127,7 @@ void main() {
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// calculate shadow
-	float shadow = ShadowCalculation(vert.FragPosLightSpace, normal, -dirLights[i].direction);  
+	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
 	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights

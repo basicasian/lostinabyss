@@ -28,7 +28,8 @@ void main() {
 
 	vert.normal_world = normalMatrix * normal;
 	vert.uv = uv;
-	
-	vert.FragPosLightSpace = lightSpaceMatrix * vec4(vert.position_world, 1.0);
+
+	vert.FragPosLightSpace = vec4(vert.position_world, 1.0);
+
 	gl_Position = viewProjMatrix * position_world_;
 }
