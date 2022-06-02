@@ -46,12 +46,12 @@ void UserInterface::initShaders(string vs, string fs, int width, int height, flo
 
 void UserInterface::renderUserinterface(glm::vec3 color)
 {
-    renderText("F1 - Wireframe, F2 - Culling, F11 - Toggle Fullscreen, ESC - Escape", 0.01 * _width, 0.97 * _height, 0.0005 * _height, color);
+    renderText("F1 - Wireframe, F2 - Culling, F11 - Toggle Fullscreen, ESC - Escape", 0.01 * _width, 0.95 * _height, 0.0005 * _height, color);
 }
 
 void UserInterface::renderFPS(int fps, glm::vec3 color)
 {
-    renderText("FPS: " + std::to_string(fps), 0.9 * _width, 0.97 * _height, 0.0005 * _height, color);
+    renderText("FPS: " + std::to_string(fps), 0.9 * _width, 0.95 * _height, 0.0005 * _height, color);
 }
 
 void UserInterface::renderLost(glm::vec3 color) {
