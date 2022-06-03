@@ -8,8 +8,8 @@
     <ClCompile Include="src\ModelLoader.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Shader.cpp" />
-    <ClCompile Include="src\ShadowMapTexture.cpp" />
-    <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\textures\ShadowMapTexture.cpp" />
+    <ClCompile Include="src\textures\Texture.cpp" />
     <ClCompile Include="src\UserInterface.cpp" />
     <ClInclude Include="src\CameraPlayer.h" />
     <ClInclude Include="src\bullet\BulletBody.h" />
@@ -25,8 +25,8 @@
     <ClInclude Include="src\ModelLoader.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\ShadowMapTexture.h" />
-    <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\textures\ShadowMapTexture.h" />
+    <ClInclude Include="src\textures\Texture.h" />
     <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>

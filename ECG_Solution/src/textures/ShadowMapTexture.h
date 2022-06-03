@@ -4,7 +4,7 @@
 
 #include <string>
 #include <GL/glew.h>
-#include "Utils.h"
+#include "../Utils.h"
 
 /*!
  * depth map texture for shadow mapping
