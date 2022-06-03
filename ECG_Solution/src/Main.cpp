@@ -38,7 +38,7 @@ void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dir
 
 void renderQuad();
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
-void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial);
+void setPerFrameUniformsLight(Shader* shader, PointLight& pointL, std::shared_ptr<Material> lightMaterial);
 
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
@@ -201,7 +201,9 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 100.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), woodTextureMaterial);
+		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 4.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 0.5f), woodTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -247,14 +249,17 @@ int main(int argc, char** argv)
 
 		#pragma region point lights
 		// blue
-		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 0.5f, -4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
 		// red
-		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(3.5f, 1.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.2f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// green
-		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-3.5f, 0.5f, 4.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-2.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
+		// white 
+		PointLight pointL4(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(-2.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL4);
 
 		#pragma endregion
 
@@ -293,9 +298,9 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->activate();
 
-
-			//testPlatform.drawDepth();
 			mainBox.drawShader(depthShader.get());
+			mainBox2.drawShader(depthShader.get());
+			mainBox3.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
@@ -304,13 +309,23 @@ int main(int argc, char** argv)
 
 			// 2. render scene as normal using the generated depth/shadow map 
 			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
-			setPerFrameUniformsLight(lightShader.get(), pointLights, lightMaterial);
 
 			// render
 			mainBox.draw();
+			mainBox2.draw();
+			mainBox3.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
+
+			// light cubes
+			for (int i = 0; i < pointLights.size(); i++) {
+				PointLight& pointL = pointLights[i];
+				Geometry lightbox(glm::translate(glm::mat4(1.0f), pointL._position), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), lightMaterial);
+
+				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
+				lightbox.drawShader(lightShader.get());
+			}
 			
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -369,20 +384,16 @@ void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight>
 	}
 }
 
-void setPerFrameUniformsLight(Shader* shader, std::vector<PointLight> pointLights, std::shared_ptr<Material> lightMaterial)
+
+void setPerFrameUniformsLight(Shader* shader, PointLight& pointL, std::shared_ptr<Material> lightMaterial)
 {
 	shader->use();
+
 	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
 	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
+	shader->setUniform("lightColor", pointL._color);
 
-	for (int i = 0; i < pointLights.size(); i++) {
-		PointLight& pointL = pointLights[i];
-
-		Geometry lightbox(glm::translate(glm::mat4(1.0f), pointL._position), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), lightMaterial);
-		shader->setUniform("lightColor", pointL._color);
-		lightbox.drawShader(shader);
-	}
 }
 
 
