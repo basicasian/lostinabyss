@@ -12,7 +12,9 @@ in VertexData {
 	vec4 FragPosLightSpace;
 } vert;
 
-out vec4 color;
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out vec4 brightColor;
+
 uniform float brightness;
 uniform vec3 camera_world;
 
@@ -121,20 +123,28 @@ void main() {
 	vec3 viewDir = normalize(camera_world - vert.position_world);
 	
 	vec3 texColor = texture(diffuseTexture, vert.uv).rgb;
-	color = vec4(texColor * materialCoefficients.x, 1); // ambient
+	vec3 result = vec3(texColor * materialCoefficients.x); // ambient
 
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
-	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
+	result += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights
 	// add point light contribution
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
-	color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
+	result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
+
+	float calcBrightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
+
+    if (calcBrightness > 1.0)
+        brightColor = vec4(result, 1.0);
+    else
+        brightColor = vec4(0.0, 0.0, 0.0, 1.0);
       
+	fragColor = vec4(result, 1.0);
 }
 
