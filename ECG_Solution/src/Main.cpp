@@ -176,7 +176,10 @@ int main(int argc, char** argv)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
 		// for shadow mapping
 		std::shared_ptr<Shader> depthShader = std::make_shared<Shader>("depth.vert", "depth.frag");
-		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow
+		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow + rendering end bloom result
+
+		std::shared_ptr<Shader> blurShader = std::make_shared<Shader>("quad.vert", "blur.frag");
+
 
 		// for bloom
 		std::shared_ptr<Shader> lightShader = std::make_shared<Shader>("texture.vert", "lightbox.frag");
@@ -278,7 +281,7 @@ int main(int argc, char** argv)
 
 
 
-
+		// --------------------------
 		// framebuffer configuration
 		unsigned int framebuffer;
 		glGenFramebuffers(1, &framebuffer);
