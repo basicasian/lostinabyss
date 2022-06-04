@@ -19,6 +19,7 @@
 #include "ModelLoader.h"
 #include "bullet/BulletWorld.h"
 #include "bullet/BulletBody.h"
+// #include "PostProcessing.h"
 
 #include <stb_image.h>
 #include <iostream>
@@ -190,8 +191,6 @@ int main(int argc, char** argv)
 		BulletWorld bulletWorld = BulletWorld(btVector3(0, -10, 0));
 		_player.addToWorld(bulletWorld);
 
-		// -----------------------
-		
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
@@ -232,6 +231,9 @@ int main(int argc, char** argv)
 			}
 		}
 		
+		// Initialize help classes
+		// PostProcessing blurProcessor = PostProcessing(window_width, window_height);
+
 		// Initialize camera
 		// Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
 
@@ -282,9 +284,8 @@ int main(int argc, char** argv)
 		glfwGetCursorPos(window, &last_mouse_x, &last_mouse_y);
 
 
-
 		// --------------------------
-		// framebuffer configuration
+		// initial framebuffer configuration
 		unsigned int framebuffer;
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -302,7 +303,6 @@ int main(int argc, char** argv)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			// attach texture to framebuffer
-			//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
 			glFramebufferTexture2D(
 				GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffer[i], 0
 			);
@@ -331,6 +331,7 @@ int main(int argc, char** argv)
 		unsigned int pingpongColorbuffers[2];
 		glGenFramebuffers(2, pingpongFBO);
 		glGenTextures(2, pingpongColorbuffers);
+
 		for (unsigned int i = 0; i < 2; i++)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
@@ -377,7 +378,7 @@ int main(int argc, char** argv)
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
-			shadowMapTexture->activate();
+			shadowMapTexture->bind();
 
 			mainBox.drawShader(depthShader.get());
 			mainBox2.drawShader(depthShader.get());

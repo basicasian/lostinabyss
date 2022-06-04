@@ -66,6 +66,7 @@ vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffus
 }
 
 /*
+// old phong method 
 vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
 	float d = length(l);
 	l = normalize(l);
@@ -128,6 +129,7 @@ void main() {
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
+	// phase 1.5: Shadow Mapping
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
 	result += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
@@ -138,6 +140,8 @@ void main() {
 	result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
 
+	// phase 3: Bloom
+	// calculated brightness for bloom effect
 	float calcBrightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
 
     if (calcBrightness > 1.0)
