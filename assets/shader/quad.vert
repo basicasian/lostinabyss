@@ -7,7 +7,7 @@ out vec2 TexCoords;
 
 void main()
 {
-    // if debugging depth mapping
+    // if debugging depth mapping (makes it grayscale)
     // gl_Position = vec4(position, 1.0); 
 
     // if quad
