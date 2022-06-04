@@ -287,17 +287,24 @@ int main(int argc, char** argv)
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		// create a color attachment texture
-		unsigned int textureColorbuffer; // here
+		unsigned int textureColorbuffer[2]; // here
 
-		glGenTextures(1, &textureColorbuffer);
+		glGenTextures(2, textureColorbuffer);
 
-
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-		
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffer[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			// attach texture to framebuffer
+			//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+			glFramebufferTexture2D(
+				GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffer[i], 0
+			);
+		}
 
 		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
 		unsigned int rbo;
@@ -307,8 +314,8 @@ int main(int argc, char** argv)
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
 
 		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-		// unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		// glDrawBuffers(2, attachments);
+		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, attachments);
 
 		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -333,8 +340,6 @@ int main(int argc, char** argv)
 			_player.inputMouseMovement(mouse_x - last_mouse_x, last_mouse_y - mouse_y);
 			last_mouse_x = mouse_x;
 			last_mouse_y = mouse_y;
-
-
 
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
@@ -388,7 +393,7 @@ int main(int argc, char** argv)
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			quadShader->use();
-			renderQuad(textureColorbuffer);
+			renderQuad(textureColorbuffer[0]);
 			// end initial framebuffer 
 			
 			double t = glfwGetTime();
