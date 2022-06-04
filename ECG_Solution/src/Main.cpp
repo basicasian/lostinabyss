@@ -36,6 +36,7 @@ void poll_keys(GLFWwindow* window, double dt);
 
 void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
 
+void renderQuad();
 void renderQuad(unsigned int textureColorbuffer);
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
 void setPerFrameUniformsLight(Shader* shader, PointLight& pointL, std::shared_ptr<Material> lightMaterial);
@@ -283,19 +284,29 @@ int main(int argc, char** argv)
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		// create a color attachment texture
-		unsigned int textureColorbuffer;
+		unsigned int textureColorbuffer; // here
+
 		glGenTextures(1, &textureColorbuffer);
+
+
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, window_width, window_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+		
+
 		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
 		unsigned int rbo;
 		glGenRenderbuffers(1, &rbo);
 		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, window_width, window_height); // use a single renderbuffer object for both a depth AND stencil buffer.
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+
+		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+		// unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		// glDrawBuffers(2, attachments);
+
 		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -320,6 +331,8 @@ int main(int argc, char** argv)
 			last_mouse_x = mouse_x;
 			last_mouse_y = mouse_y;
 
+
+
 			// shadowmapping
 			// 1. render depth of scene to texture (from light's perspective) (is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
@@ -335,13 +348,15 @@ int main(int argc, char** argv)
 			shadowMapTexture->resetViewPort();
 
 			// 2. render scene as normal using the generated depth/shadow map 
-			// ------------------------
-
+			
+			// start initial framebuffer 
 			// first pass
+			
 			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
 			glEnable(GL_DEPTH_TEST);
+			// end initial framebuffer 
 
 			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
 
@@ -361,15 +376,17 @@ int main(int argc, char** argv)
 				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
 				lightbox.drawShader(lightShader.get());
 			}
-
+			
+			// start initial framebuffer 
 			// second pass
+			
 			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
 			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			quadShader->use();
 			renderQuad(textureColorbuffer);
-
+			// end initial framebuffer 
 			
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -391,9 +408,9 @@ int main(int argc, char** argv)
 				btScalar(1.) / btScalar(60.)); // fixedTimeStep: inversely proportional to the simulation's resolution
 
 			// render depth map to quad for visual debugging
-			// quadShader->use();
-			// glActiveTexture(GL_TEXTURE0);
-			// glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
+			quadShader->use();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
 			//renderQuad();
 
 			// Swap buffers
@@ -693,12 +710,39 @@ void renderQuad(unsigned int textureColorbuffer)
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 	}
-	//glBindVertexArray(quadVAO);
-	//glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	//glBindVertexArray(0);
 
 	glBindVertexArray(quadVAO);
 	glDisable(GL_DEPTH_TEST);
 	glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+// renderQuad() renders a 1x1 XY quad in NDC
+// for debugging shadow!
+// -----------------------------------------
+void renderQuad()
+{
+	if (quadVAO == 0)
+	{
+		float quadVertices[] = {
+			// positions        // texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			 1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
 }
