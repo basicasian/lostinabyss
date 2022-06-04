@@ -61,6 +61,7 @@ int window_width, window_height, _refresh_rate;
 GLFWmonitor* monitor;
 bool fullscreen;
 float _brightness;
+float exposure = 1.0f;
 
 std::vector<DirectionalLight> dirLights;
 std::vector<PointLight> pointLights;
@@ -176,12 +177,13 @@ int main(int argc, char** argv)
 		std::shared_ptr<Shader> textureShader = std::make_shared<Shader>("texture.vert", "texture.frag");
 		// for shadow mapping
 		std::shared_ptr<Shader> depthShader = std::make_shared<Shader>("depth.vert", "depth.frag");
+
+		// for bloom
 		std::shared_ptr<Shader> quadShader = std::make_shared<Shader>("quad.vert", "quad.frag"); // for debugging shadow + rendering end bloom result
 
 		std::shared_ptr<Shader> blurShader = std::make_shared<Shader>("quad.vert", "blur.frag");
-
-
-		// for bloom
+		std::shared_ptr<Shader> bloomResultShader = std::make_shared<Shader>("quad.vert", "bloomresult.frag");
+				
 		std::shared_ptr<Shader> lightShader = std::make_shared<Shader>("texture.vert", "lightbox.frag");
 
 		// Initialize bullet world
@@ -252,17 +254,17 @@ int main(int argc, char** argv)
 		#pragma endregion
 
 		#pragma region point lights
-		// blue
-		PointLight pointL1(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(1.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// turqoise
+		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(1.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
-		// red
-		PointLight pointL2(glm::vec3(5.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.2f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// yellow
+		PointLight pointL2(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(1.0f, 1.2f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// green
 		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-2.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
 		// white 
-		PointLight pointL4(glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(-2.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL4(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-2.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL4);
 
 		#pragma endregion
@@ -321,10 +323,41 @@ int main(int argc, char** argv)
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		 
+
+		// ----------------------
+		// ping-pong-framebuffer for blurring
+		unsigned int pingpongFBO[2];
+		unsigned int pingpongColorbuffers[2];
+		glGenFramebuffers(2, pingpongFBO);
+		glGenTextures(2, pingpongColorbuffers);
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+			glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, window_width, window_height, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // we clamp to the edge as the blur filter would otherwise sample repeated texture values!
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+			// also check if framebuffers are complete (no need for depth buffer)
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				std::cout << "Framebuffer not complete!" << std::endl;
+		}
+
+
 
 		// shader configuration
 		quadShader->use();
 		quadShader->setUniform("screenTexture", 0);
+
+		blurShader->use();
+		blurShader->setUniform("image", 0);
+
+		bloomResultShader->use();
+		bloomResultShader->setUniform("scene", 0);
+		bloomResultShader->setUniform("bloomBlur", 1);
 
 		while (!glfwWindowShouldClose(window)) {
 			// Clear backbuffer
@@ -358,8 +391,7 @@ int main(int argc, char** argv)
 			// 2. render scene as normal using the generated depth/shadow map 
 			
 			// start initial framebuffer 
-			// first pass
-			
+			// first pass			
 			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
@@ -385,15 +417,46 @@ int main(int argc, char** argv)
 				lightbox.drawShader(lightShader.get());
 			}
 			
-			// start initial framebuffer 
-			// second pass
-			
-			glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
+			// 2. blur bright fragments with two-pass Gaussian Blur 
+			// --------------------------------------------------
+			bool horizontal = true, first_iteration = true;
+			unsigned int amount = 10;
+			blurShader->use();
+			for (unsigned int i = 0; i < amount; i++)
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+				blurShader -> setUniform("horizontal", horizontal);
+				glBindTexture(GL_TEXTURE_2D, first_iteration ? textureColorbuffer[1] : pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
+				renderQuad();
+				horizontal = !horizontal;
+				if (first_iteration)
+					first_iteration = false;
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-			quadShader->use();
-			renderQuad(textureColorbuffer[0]);
+
+			// 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
+			// --------------------------------------------------------------------------------------------------------------------------
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			bloomResultShader -> use();
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffer[0]);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+
+			bloomResultShader->setUniform("exposure", exposure);
+			renderQuad();
+
+
+			// start initial framebuffer 
+			// second pass			
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+			//glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+			//glClear(GL_COLOR_BUFFER_BIT);
+
+			//quadShader->use();
+			//renderQuad(textureColorbuffer[0]);
 			// end initial framebuffer 
 			
 			double t = glfwGetTime();

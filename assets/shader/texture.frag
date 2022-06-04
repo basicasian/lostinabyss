@@ -36,7 +36,7 @@ uniform struct PointLight {
 	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 1
+#define NR_DIR_LIGHTS 3
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
 
