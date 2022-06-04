@@ -57,5 +57,31 @@ void BulletWorld::addRigidBody(btRigidBody* body)
     _world->addRigidBody(body);
 }
 
+bool BulletWorld::checkWinCondition() {
+    int numManifolds = _world->getDispatcher()->getNumManifolds();
+    for (int i = 0; i < numManifolds; i++) {
+        // take each manifold object from the internal manifolds array by index
+        btPersistentManifold* contactManifold = _world->getDispatcher()->getManifoldByIndexInternal(i);
+
+        // get the number of contacts and check that there is at least one contact between the pair of bodies
+        int numContacts = contactManifold->getNumContacts();
+
+        if (numContacts > 0)
+        {
+            // get the collision objects  and then the pointer to the bullet objects
+            const btCollisionObject* obA = contactManifold->getBody0();
+            const btCollisionObject* obB = contactManifold->getBody1();
+
+            BulletBody* btA = (BulletBody*)obA->getUserPointer();
+            BulletBody* btB = (BulletBody*)obB->getUserPointer();
+
+            if (btA->getTag() == btWin || btB->getTag() == btWin) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 

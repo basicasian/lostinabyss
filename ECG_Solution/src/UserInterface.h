@@ -41,12 +41,14 @@ private:
 
 	void renderWon(glm::vec3 color);
 
+	void renderTime(double time, glm::vec3 color);
+
 public:
 
 	// constructor
 	UserInterface(string vs, string fs, int width, int height, float brightness, string fontPath);
 
-	void updateUI(int fps, bool lost, bool won, glm::vec3 color);
+	void updateUI(int fps, bool lost, bool won, double time, glm::vec3 color);
 
 	
 };

@@ -8,18 +8,19 @@ UserInterface::UserInterface(string vs, string fs, int width, int height, float 
     generateCharacterTextures();
 }
 
-void UserInterface::updateUI(int fps, bool lost, bool won, glm::vec3 color)
+void UserInterface::updateUI(int fps, bool lost, bool won, double time, glm::vec3 color)
 {
     renderFPS(fps, color);
+    renderUserinterface(color);
 
-    if (lost) {
-        renderLost(color);
-    }
-    else if (won) {
+    if (won) {
         renderWon(color);
     }
+    else if (lost) {
+        renderLost(color);
+    }
     else {
-        renderUserinterface(color);
+        renderTime(time, color);
     }
 }
 
@@ -64,6 +65,15 @@ void UserInterface::renderWon(glm::vec3 color) {
 
     renderText("yay, you won!",
         0.35 * _width, 0.5 * _height, 0.002 * _height, color);
+}
+
+void UserInterface::renderTime(double time, glm::vec3 color) {
+    // get minutes and seconds of time left
+    int mins = time / 60;
+    int secs = int(time) % 60;
+    int tenth = (time - 60 * mins - secs) * 10;
+    renderText("Time left: " + std::to_string(mins) + ":" + std::to_string(secs) + "." + std::to_string(tenth),
+        0.01 * _width, 0.02 * _height, 0.0005 * _height, color);
 }
 
 void UserInterface::renderText(std::string text, float x, float y, float scale, glm::vec3 color)

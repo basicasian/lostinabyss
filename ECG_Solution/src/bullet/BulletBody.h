@@ -9,8 +9,10 @@
 #include "../Geometry.h"
 
 
-#define btTag      1
+#define btPlatform 1
 #define btPlayer   2
+#define btWin      3
+#define btObject   4
 
 /*!
  * Physics Node Implementation based on Bullet
@@ -147,4 +149,5 @@ public:
 	* @param dynamics_world : bullet worlds
 	*/
 	void BulletBody::destroyBody(btDiscreteDynamicsWorld* dynamics_world);
+
 };
