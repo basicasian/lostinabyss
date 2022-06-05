@@ -21,7 +21,7 @@ protected:
 
 	// blur
 	bool _horizontal = true, _first_iteration = true;
-	unsigned int _amount = 10;
+	unsigned int _amount = 20;
 	float _exposure = 1.0f;
 
 	// quad
@@ -36,9 +36,8 @@ public:
 
 	void bindInitalFrameBuffer();
 
-	void blurFragments(Shader* blurShader);
+	void blurFragments(Shader* blurShader, Shader* bloomResultShader);
 
 	void renderBloomFinal(Shader* bloomResultShader);
-};
 
-QuadGeometry PostProcessing::_quadGeometry = QuadGeometry();
+};

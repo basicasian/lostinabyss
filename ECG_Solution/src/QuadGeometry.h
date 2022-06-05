@@ -12,7 +12,10 @@ protected:
 public:
 
 	QuadGeometry();
+
 	~QuadGeometry();
 
 	void renderQuad();
+
+	void renderQuad(unsigned int textureColorbuffer);
 };

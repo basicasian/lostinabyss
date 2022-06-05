@@ -64,45 +64,55 @@ PostProcessing::PostProcessing(GLuint window_width, GLuint window_height)
 
 PostProcessing::~PostProcessing()
 {
+	if (_created) {
+		glDeleteFramebuffers(1, &_framebuffer);
+		glDeleteTextures(2, _textureColorbuffer);
+		glDeleteRenderbuffers(1, &_frambufferDepthRbo);
+	}
 }
 
 
 void PostProcessing::bindInitalFrameBuffer()
 {
+	// 1. render scene into floating point framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
 	glEnable(GL_DEPTH_TEST);
+
+	// afterwards draw scene normally
 }
 
-void PostProcessing::blurFragments(Shader* blurShader)
+void PostProcessing::blurFragments(Shader* blurShader, Shader* bloomResultShader)
 {
-
+	// 2. blur bright fragments with two-pass Gaussian Blur 
+	bool horizontal = true, first_iteration = true;
+	unsigned int amount = 10;
 	blurShader->use();
-	for (unsigned int i = 0; i < _amount; i++)
+	for (unsigned int i = 0; i < amount; i++)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, _pingpongFBO[_horizontal]);
-		blurShader->setUniform("horizontal", _horizontal);
-		glBindTexture(GL_TEXTURE_2D, _first_iteration ? _textureColorbuffer[1] : _pingpongColorbuffers[!_horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
+		glBindFramebuffer(GL_FRAMEBUFFER, _pingpongFBO[horizontal]);
+		blurShader->setUniform("horizontal", horizontal);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? _textureColorbuffer[1] : _pingpongColorbuffers[!horizontal]);  // bind texture of other framebuffer (or scene if first iteration)
 		_quadGeometry.renderQuad();
-		_horizontal = !_horizontal;
-		if (_first_iteration)
-			_first_iteration = false;
+		horizontal = !horizontal;
+		if (first_iteration)
+			first_iteration = false;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
 
-void PostProcessing::renderBloomFinal(Shader* bloomResultShader)
-{
+	// 3. now render floating point color buffer to 2D quad and tonemap HDR colors to default framebuffer's (clamped) color range
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	bloomResultShader->use();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _textureColorbuffer[0]);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, _pingpongColorbuffers[!_horizontal]);
+	glBindTexture(GL_TEXTURE_2D, _pingpongColorbuffers[!horizontal]);
 
 	bloomResultShader->setUniform("exposure", _exposure);
 	_quadGeometry.renderQuad();
 }
+
+QuadGeometry PostProcessing::_quadGeometry = QuadGeometry();
 
