@@ -220,12 +220,8 @@ int main(int argc, char** argv)
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
 		
 		for (const auto& mesh : scene.getMeshes()) {
-			// store bullet body in a list or another data structure 
-			std::cout << mesh._aiMesh->mName.C_Str() << std::endl;
-			std::cout << mesh._aiMesh->mNumVertices << std::endl;
 			string name(mesh._aiMesh->mName.C_Str());
 			if (!(name.compare("hull"))) {
-				//std::cout << "this is hull" << std::endl;
 				BulletBody btScene(btObject, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
 			} 
 			else if (!(name.compare("win"))) {
@@ -246,9 +242,6 @@ int main(int argc, char** argv)
 		// user interface/HUD
 		_ui = std::make_shared<UserInterface>("userinterface.vert", "userinterface.frag", window_width, window_height, _brightness, _fontpath);
 
-		// Initialize camera
-		// Camera camera(fov, float(window_width) / float(window_height), nearZ, farZ);
-		
 		// Initialize lights and put them into vector
 		// NOTE: to set up number of lights "#define NR_DIR_LIGHTS" and "#define NR_POINT_LIGHTS" in "texture.frag" has to be updated!
 		#pragma region directional lights
@@ -494,6 +487,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
 	// F1 - Wireframe
 	// F2 - Culling
+	// F10 - Reset game
 	// F11 - Fullscreen toggle
 	// Esc - Exit
 
@@ -512,6 +506,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		_culling = !_culling;
 		if (_culling) glEnable(GL_CULL_FACE);
 		else glDisable(GL_CULL_FACE);
+		break;
+	case GLFW_KEY_F10:
+		_player.moveTo(glm::vec3(0.0f, 5.0f, 0.0f));
+		_start = glfwGetTime();
+		_gameLost = false;
+		_gameWon = false;
 		break;
 	case GLFW_KEY_F11:
 
