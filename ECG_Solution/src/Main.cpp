@@ -354,9 +354,6 @@ int main(int argc, char** argv)
 				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
 				lightbox.drawShader(lightShader.get());
 			}
-			
-			// bloom (fragments and render to quad)
-			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
 			double t = glfwGetTime();
 			double dt = t - lastT;
@@ -377,6 +374,9 @@ int main(int argc, char** argv)
 
 			// draw user interface
 			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+
+			// bloom (fragments and render to quad)
+			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
 			// bullet
 			bulletWorld.stepSimulation(
