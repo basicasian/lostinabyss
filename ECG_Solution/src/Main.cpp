@@ -53,8 +53,10 @@ static bool _strafing = false;
 static float _zoom = 6.0f;
 static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 
-int _timer = 300;
-boolean _gameLost = false;
+double _start;
+int _timer = 100;
+bool _gameLost = false;
+bool _gameWon = false;
 
 int window_width, window_height, _refresh_rate;
 GLFWmonitor* monitor;
@@ -87,6 +89,7 @@ int main(int argc, char** argv)
 	float nearZ = float(reader.GetReal("camera", "near", 0.1f));
 	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
 	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
+	BulletBody winPlatform;
 
 	_player.setProjectionMatrix(fov, farZ, nearZ, (float)window_width / (float)window_height);
 	std::shared_ptr<UserInterface> _ui;
@@ -211,7 +214,7 @@ int main(int argc, char** argv)
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		BulletBody btCat(btTag, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
+		BulletBody btCat(btObject, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
@@ -223,10 +226,13 @@ int main(int argc, char** argv)
 			string name(mesh._aiMesh->mName.C_Str());
 			if (!(name.compare("hull"))) {
 				//std::cout << "this is hull" << std::endl;
-				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+				BulletBody btScene(btObject, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
+			} 
+			else if (!(name.compare("win"))) {
+				winPlatform = BulletBody(btWin, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
 			else {
-				BulletBody btScene(btTag, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
+				BulletBody btScene(btPlatform, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
 		}
 		
@@ -276,6 +282,7 @@ int main(int argc, char** argv)
 
 		// Render loop
 		float lastT = float(glfwGetTime());
+		_start = lastT;
 		float dt = 0.0f;
 		float t_sum = 0.0f;
 		double mouse_x, mouse_y;
@@ -348,9 +355,6 @@ int main(int argc, char** argv)
 				lightbox.drawShader(lightShader.get());
 			}
 			
-			// draw user interface
-			_ui->updateUI(fps, false, false, glm::vec3(0, 0, 0));
-
 			// bloom (fragments and render to quad)
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
@@ -363,6 +367,16 @@ int main(int argc, char** argv)
 			fpsCounter++;
 
 			lastT = t;
+
+			// check win/lose condition
+			if (!_gameLost && t - _start > _timer && !_gameWon) {
+				_gameLost = true;
+			} else if (!_gameWon) {
+				_gameWon = bulletWorld.checkWinCondition();
+			}
+
+			// draw user interface
+			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
 
 			// bullet
 			bulletWorld.stepSimulation(

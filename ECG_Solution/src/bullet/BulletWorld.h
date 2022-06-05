@@ -2,6 +2,7 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 #include "../Utils.h"
+#include "BulletBody.h"
 
 class BulletWorld
 {
@@ -30,6 +31,8 @@ public:
 	void removeRigidBody(btRigidBody* body);
 
 	void addRigidBody(btRigidBody* body);
+
+	bool checkWinCondition();
 };
 
 
