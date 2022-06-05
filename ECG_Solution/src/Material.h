@@ -8,7 +8,7 @@
 #include <memory>
 #include <glm/glm.hpp>
 #include "Shader.h"
-#include "Texture.h"
+#include "textures/Texture.h"
 
 
 

@@ -12,7 +12,9 @@ in VertexData {
 	vec4 FragPosLightSpace;
 } vert;
 
-out vec4 color;
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out vec4 brightColor;
+
 uniform float brightness;
 uniform vec3 camera_world;
 
@@ -34,11 +36,11 @@ uniform struct PointLight {
 	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 1
+#define NR_DIR_LIGHTS 3
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
 
-#define NR_POINT_LIGHTS 3
+#define NR_POINT_LIGHTS 4
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
@@ -64,6 +66,7 @@ vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffus
 }
 
 /*
+// old phong method 
 vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
 	float d = length(l);
 	l = normalize(l);
@@ -121,20 +124,31 @@ void main() {
 	vec3 viewDir = normalize(camera_world - vert.position_world);
 	
 	vec3 texColor = texture(diffuseTexture, vert.uv).rgb;
-	color = vec4(texColor * materialCoefficients.x, 1); // ambient
+	vec3 result = vec3(texColor * materialCoefficients.x); // ambient
 
 	// phase 1: Directional lighting
 	// add directional light contribution
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
+	// phase 1.5: Shadow Mapping
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
-	color.rgb += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
+	result += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
 	// phase 2: Point lights
 	// add point light contribution
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
-	color.rgb += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
+	result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
+
+	// phase 3: Bloom
+	// calculated brightness for bloom effect
+	float calcBrightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
+
+    if (calcBrightness > 1.0)
+        brightColor = vec4(result, 1.0);
+    else
+        brightColor = vec4(0.0, 0.0, 0.0, 1.0);
       
+	fragColor = vec4(result, 1.0);
 }
 

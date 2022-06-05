@@ -8,7 +8,7 @@
 
 #include <string>
 #include <GL/glew.h>
-#include "Utils.h"
+#include "../Utils.h"
 
 /*!
  * 2D texture

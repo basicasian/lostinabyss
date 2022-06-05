@@ -4,7 +4,7 @@
 
 #include <string>
 #include <GL/glew.h>
-#include "Utils.h"
+#include "../Utils.h"
 
 /*!
  * depth map texture for shadow mapping
@@ -35,7 +35,7 @@ public:
 
 	GLuint getDepthFBO();
 
-	void activate();
+	void bind();
 	void resetViewPort();
 
 };
