@@ -265,23 +265,28 @@ int main(int argc, char** argv)
 
 		#pragma region point lights
 		// turqoise
-		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 0.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL2(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL2);
+		// turqoise
+		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
 		// yellow
-		PointLight pointL2(glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(15.0f, 4.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL2);
-		// green
-		PointLight pointL3(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL3(glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(15.0f, 4.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
-		// white 
-		PointLight pointL4(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// green
+		PointLight pointL4(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL4);
-		// pink
-		PointLight pointL5(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 5.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL5);
 		// white
 		PointLight pointL6(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 3.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL6);
+		// pink
+		PointLight pointL7(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 4.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL7);
+		// white 
+		PointLight pointL5(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL5);
+		
+		
 
 		#pragma endregion
 
@@ -356,13 +361,13 @@ int main(int argc, char** argv)
 			scene.Draw();
 
 			// light cubes
-			for (int i = 0; i < pointLights.size(); i++) {
-				PointLight& pointL = pointLights[i];
+			for (int i = 1; i <= pointLights.size(); i++) {
+				PointLight& pointL = pointLights[i-1];
 
 				glm::mat4 trans = glm::mat4(1.0f);
 				trans = glm::translate(trans, pointL._position);
 				trans = glm::rotate(trans, glm::radians(15.0f * i), glm::vec3(1.0, 1.0, 1.0));
-				Geometry lightbox(trans , Geometry::createCubeGeometry(2.0f * i, 2.0f * i, 2.0f * i), lightMaterial);
+				Geometry lightbox(trans , Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), lightMaterial);
 
 				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
 				lightbox.drawShader(lightShader.get());
