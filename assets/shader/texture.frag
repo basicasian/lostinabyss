@@ -137,7 +137,7 @@ void main() {
 	// phase 2: Point lights
 	// add point light contribution
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
-	result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
+	 result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
 
 	// phase 3: Bloom
