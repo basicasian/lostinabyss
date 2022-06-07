@@ -14,7 +14,6 @@
 #include "Material.h"
 #include "Light.h"
 #include "textures/Texture.h"
-#include "textures/VideoTexture.h"
 #include "textures/ShadowMapTexture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
