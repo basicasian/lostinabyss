@@ -10,10 +10,8 @@
     <ClCompile Include="src\PostProcessing.cpp" />
     <ClCompile Include="src\QuadGeometry.cpp" />
     <ClCompile Include="src\Shader.cpp" />
-    <ClCompile Include="src\textures\ImageTexture.cpp" />
     <ClCompile Include="src\textures\ShadowMapTexture.cpp" />
     <ClCompile Include="src\textures\Texture.cpp" />
-    <ClCompile Include="src\textures\VideoTexture.cpp" />
     <ClCompile Include="src\UserInterface.cpp" />
     <ClInclude Include="src\CameraPlayer.h" />
     <ClInclude Include="src\bullet\BulletBody.h" />
@@ -31,10 +29,8 @@
     <ClInclude Include="src\PostProcessing.h" />
     <ClInclude Include="src\QuadGeometry.h" />
     <ClInclude Include="src\Shader.h" />
-    <ClInclude Include="src\textures\ImageTexture.h" />
     <ClInclude Include="src\textures\ShadowMapTexture.h" />
     <ClInclude Include="src\textures\Texture.h" />
-    <ClInclude Include="src\textures\VideoTexture.h" />
     <ClInclude Include="src\UserInterface.h" />
     <ClInclude Include="src\Utils.h" />
   </ItemGroup>

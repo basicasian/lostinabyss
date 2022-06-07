@@ -22,22 +22,32 @@ protected:
 	GLuint _depthMap;
 
 	string _type;
+	int _width, _height;
+
+	// for video
+	string _files[10];
+	unsigned char* _imageData[10];
+	double _frameRate = 1 / 30.;
+	double _time = 0;
+	int _index = 0;
+
 
 public:
 	/*!
 	 * Creates a texture from a file
-	 * @param file: path to the texture file (a DSS image)
 	 */
 	Texture(std::string file, GLuint depthMap, string type);
-	
+
 	Texture();
 
 	~Texture();
-		 	 
+
 	/*!
 	 * Activates the texture unit and binds this texture
 	 * @param unit: the texture unit
 	 */
 	void bind(unsigned int unit);
+
+	void updateVideo(double dt);
 
 };

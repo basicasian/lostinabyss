@@ -15,7 +15,6 @@
 #include "Light.h"
 #include "textures/Texture.h"
 #include "textures/VideoTexture.h"
-#include "textures/ImageTexture.h"
 #include "textures/ShadowMapTexture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
@@ -200,6 +199,7 @@ int main(int argc, char** argv)
 
 
 		//std::shared_ptr<VideoTexture> videoTexture = std::make_shared<VideoTexture>("assets/textures/videoframes/frame_", ".png");
+		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/minions/frame0.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/platform.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
@@ -210,6 +210,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
+		std::shared_ptr<Material> videoTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, videoTexture);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
@@ -217,8 +218,8 @@ int main(int argc, char** argv)
 
 		// Create geometry
 		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), tileTextureMaterial);
-		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 4.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 0.5f), imageTextureMaterial);
+		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
+		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, 3.0f)), Geometry::createCubeGeometry(2.0f, 1.5f, 0.01f), videoTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -255,13 +256,13 @@ int main(int argc, char** argv)
 		#pragma region directional lights
 
 		//white
-		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		DirectionalLight dirL1(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, -1.0f, 0.0f));
 		dirLights.push_back(dirL1);
 		// orangey
 		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, -1.0f));
 		dirLights.push_back(dirL2);
 		// pinkish
-		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
+		DirectionalLight dirL3(glm::vec3(0.3f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
 		dirLights.push_back(dirL3);
 		#pragma endregion
 
@@ -320,6 +321,8 @@ int main(int argc, char** argv)
 			last_mouse_x = mouse_x;
 			last_mouse_y = mouse_y;
 
+			
+
 			// shadowmapping (render depth of scene to texture - is done in dirLight constructor)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->bind();
@@ -342,6 +345,7 @@ int main(int argc, char** argv)
 			// render
 			mainBox.draw();
 			mainBox2.draw();
+			
 			mainBox3.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
@@ -376,11 +380,13 @@ int main(int argc, char** argv)
 			// draw user interface
 			_ui -> updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
 
-			// update video texture
-			// videoTexture->updateVideo(dt);
+			
 
 			// bloom (fragments and render to quad)
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
+
+			// update video texture
+			videoTexture->updateVideo(dt);
 
 			// bullet
 			bulletWorld.stepSimulation(
@@ -389,11 +395,12 @@ int main(int argc, char** argv)
 				btScalar(1.) / btScalar(60.)); // fixedTimeStep: inversely proportional to the simulation's resolution
 
 			// render depth map to quad for visual shadow map debugging
-			quadShader->use();
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
+			// quadShader->use();
+			// glActiveTexture(GL_TEXTURE0);
+			// glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
 			// _quadGeometry.renderQuad(); // remove comment to see shadow map for debug
 
+			
 			// Swap buffers
 			glfwSwapBuffers(window);
 		}

@@ -22,8 +22,8 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 
 	if (_type == "image") {
 		// load image
-		int width, height, nrChannels;
-		unsigned char* data = stbi_load(file.c_str(), &width, &height, &nrChannels, 0);
+		int nrChannels;
+		unsigned char* data = stbi_load(file.c_str(), &_width, &_height, &nrChannels, 0);
 
 		// generate texture
 		glGenTextures(1, &_handle);
@@ -37,7 +37,7 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 
 		if (data)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else
@@ -47,6 +47,45 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 
 		// free image memory
 		stbi_image_free(data);
+	}
+
+	if (type == "video") {
+
+		// load images	
+		_width = 500;
+		_height = 226;
+		for (int i = 0; i < 10; i++) {
+
+			std::size_t pos = file.find(".");
+			std::string begin = file.substr(0, pos-1);
+			std::string end = file.substr(pos);
+
+			// create string of file
+			std::string filename = begin;
+			filename.append(std::to_string(i));
+			filename.append(end);
+
+			std::cout << filename << std::endl;
+
+			// load file to data structure
+			int width, height, nrChannels;
+			_imageData[i] = stbi_load(filename.c_str(), &_width, &_height, &nrChannels, 0);
+			if (!_imageData[i])
+			{
+				std::cout << "Texture failed to load at path: " << _files[i] << std::endl;
+			}
+		}
+		// generate texture
+		glGenTextures(1, &_handle);
+		glBindTexture(GL_TEXTURE_2D, _handle);
+
+		// set the texture wrapping/filtering options (on the currently bound texture object)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, _imageData[_index]);
 	}
 	
 }
@@ -66,4 +105,27 @@ Texture::~Texture()
 
 Texture::Texture()
 {
+}
+
+void Texture::updateVideo(double dt)
+{
+	if (!_init) return;
+
+	_time += dt;
+	if (_time > _frameRate) {
+		_time -= _frameRate;
+
+		// activate texture 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, _handle);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, _imageData[_index]);
+		// glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, _imageData[_index]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		_index = (_index + 1) % 10;
+	}
 }
