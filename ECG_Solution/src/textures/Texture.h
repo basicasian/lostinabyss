@@ -25,8 +25,9 @@ protected:
 	int _width, _height;
 
 	// for video
-	string _files[10];
-	unsigned char* _imageData[10];
+	int _frameNumber = 48;
+	unsigned char* _imageData[48];
+
 	double _frameRate = 1 / 30.;
 	double _time = 0;
 	int _index = 0;

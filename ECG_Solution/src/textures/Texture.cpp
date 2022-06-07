@@ -54,7 +54,7 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 		// load images	
 		_width = 500;
 		_height = 226;
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < _frameNumber; i++) {
 
 			std::size_t pos = file.find(".");
 			std::string begin = file.substr(0, pos-1);
@@ -62,17 +62,23 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 
 			// create string of file
 			std::string filename = begin;
+			if (i < 10) {
+				filename.append("0");
+			}
 			filename.append(std::to_string(i));
 			filename.append(end);
 
-			std::cout << filename << std::endl;
+			// std::cout << filename << std::endl;
 
 			// load file to data structure
 			int width, height, nrChannels;
+
+			stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis
 			_imageData[i] = stbi_load(filename.c_str(), &_width, &_height, &nrChannels, 0);
+			stbi_set_flip_vertically_on_load(false); // set it right for other textures
 			if (!_imageData[i])
 			{
-				std::cout << "Texture failed to load at path: " << _files[i] << std::endl;
+				std::cout << "Texture failed to load at path: " << filename << std::endl;
 			}
 		}
 		// generate texture
@@ -126,6 +132,6 @@ void Texture::updateVideo(double dt)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		_index = (_index + 1) % 10;
+		_index = (_index + 1) % _frameNumber;
 	}
 }
