@@ -5,7 +5,7 @@
 */
 #pragma once
 
-
+#include "stb_image.h"
 #include <string>
 #include <GL/glew.h>
 #include "../Utils.h"
@@ -16,17 +16,21 @@
 class Texture
 {
 protected:
-	GLuint _handle;
-	bool _init;
+	boolean _init;
 
+	GLuint _handle;
 	GLuint _depthMap;
+
+	string _type;
 
 public:
 	/*!
 	 * Creates a texture from a file
 	 * @param file: path to the texture file (a DSS image)
 	 */
-	Texture(std::string file, GLuint depthMap);
+	Texture(std::string file, GLuint depthMap, string type);
+	
+	Texture();
 
 	~Texture();
 		 	 
@@ -35,4 +39,5 @@ public:
 	 * @param unit: the texture unit
 	 */
 	void bind(unsigned int unit);
+
 };

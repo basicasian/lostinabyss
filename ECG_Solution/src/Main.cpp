@@ -14,6 +14,8 @@
 #include "Material.h"
 #include "Light.h"
 #include "textures/Texture.h"
+#include "textures/VideoTexture.h"
+#include "textures/ImageTexture.h"
 #include "textures/ShadowMapTexture.h"
 #include "UserInterface.h"
 #include "ModelLoader.h"
@@ -196,12 +198,18 @@ int main(int argc, char** argv)
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle());
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle());
+
+		//std::shared_ptr<VideoTexture> videoTexture = std::make_shared<VideoTexture>("assets/textures/videoframes/frame_", ".png");
+		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/platform.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
 		// Create materials
+		//std::shared_ptr<Material> videoTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, videoTexture);
+
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
+		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
@@ -209,8 +217,8 @@ int main(int argc, char** argv)
 
 		// Create geometry
 		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), woodTextureMaterial);
-		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 4.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), tileTextureMaterial);
+		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 4.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 0.5f), imageTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -232,8 +240,8 @@ int main(int argc, char** argv)
 			}
 		}
 		
-		// Initialize blur classes
-		// blur
+		// Initialize help classes
+		// bloom/ blur
 		PostProcessing blurProcessor = PostProcessing(window_width, window_height);
 
 		// shadowmap debugging
@@ -366,7 +374,10 @@ int main(int argc, char** argv)
 			}
 
 			// draw user interface
-			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+			_ui -> updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+
+			// update video texture
+			// videoTexture->updateVideo(dt);
 
 			// bloom (fragments and render to quad)
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
