@@ -53,6 +53,7 @@ static bool _strafing = false;
 static float _zoom = 6.0f;
 static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 
+
 double _start;
 int _timer = 100;
 bool _gameLost = false;
@@ -217,7 +218,7 @@ int main(int argc, char** argv)
 		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
 		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, -2.0f, -3.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
 
-		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, -3.0f)), Geometry::createCubeGeometry(2.0f, 1.5f, 0.01f), videoTextureMaterial);
+		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), videoTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
