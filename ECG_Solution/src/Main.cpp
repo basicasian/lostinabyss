@@ -90,6 +90,7 @@ int main(int argc, char** argv)
 	float farZ = float(reader.GetReal("camera", "far", 1000.0f));
 	string _fontpath = "assets/fonts/Roboto-Regular.ttf";
 	BulletBody winPlatform;
+	BulletBody movingPlatform;
 
 	_player.setProjectionMatrix(fov, farZ, nearZ, (float)window_width / (float)window_height);
 	std::shared_ptr<UserInterface> _ui;
@@ -225,7 +226,11 @@ int main(int argc, char** argv)
 				BulletBody btScene(btObject, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
 			} 
 			else if (!(name.compare("win"))) {
+				std::cout << "winplatform found" << std::endl;
 				winPlatform = BulletBody(btWin, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
+			}
+			else if (!(name.compare("move"))) {
+				movingPlatform = BulletBody(btWin, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
 			else {
 				BulletBody btScene(btPlatform, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
