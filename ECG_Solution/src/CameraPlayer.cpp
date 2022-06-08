@@ -122,7 +122,7 @@ void CameraPlayer::inputKeys(KeyInput& input, double deltaTime)
     // only jump if the ground is touched
     if (input.jump && groundTouched)
     {
-        _rigidBody->applyCentralImpulse({ 0, 3, 0 });
+        _rigidBody->applyCentralImpulse({ 0, 14, 0 });
     }
 }
 

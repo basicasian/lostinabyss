@@ -197,21 +197,27 @@ int main(int argc, char** argv)
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle());
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle());
+		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_0.jpg", shadowMapTexture->getHandle(), "video");
+		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/platform.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
+		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
+		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
+		std::shared_ptr<Material> videoTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, videoTexture);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f)), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), woodTextureMaterial);
-		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), woodTextureMaterial);
-		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 4.0f)), Geometry::createCubeGeometry(1.5f, 1.5f, 0.5f), woodTextureMaterial);
+		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 5.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
+		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
+		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, -2.0f, -3.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
+
+		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 2.0f, -3.0f)), Geometry::createCubeGeometry(2.0f, 1.5f, 0.01f), videoTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -237,8 +243,8 @@ int main(int argc, char** argv)
 			}
 		}
 		
-		// Initialize blur classes
-		// blur
+		// Initialize help classes
+		// bloom/ blur
 		PostProcessing blurProcessor = PostProcessing(window_width, window_height);
 
 		// shadowmap debugging
@@ -252,29 +258,40 @@ int main(int argc, char** argv)
 		#pragma region directional lights
 
 		//white
-		DirectionalLight dirL1(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		DirectionalLight dirL1(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.0f, -1.0f, 0.0f));
 		dirLights.push_back(dirL1);
 		// orangey
 		DirectionalLight dirL2(glm::vec3(0.3f, 0.2f, 0.1f), glm::vec3(0.0f, -1.0f, -1.0f));
 		dirLights.push_back(dirL2);
 		// pinkish
-		DirectionalLight dirL3(glm::vec3(0.4f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
+		DirectionalLight dirL3(glm::vec3(0.3f, 0.2f, 0.3f), glm::vec3(0.0f, -1.0f, 1.0f));
 		dirLights.push_back(dirL3);
 		#pragma endregion
 
 		#pragma region point lights
 		// turqoise
-		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(1.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL2(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL2);
+		// turqoise
+		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
 		// yellow
-		PointLight pointL2(glm::vec3(5.0f, 5.0f, 0.0f), glm::vec3(1.0f, 1.2f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL2);
-		// green
-		PointLight pointL3(glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(-2.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		PointLight pointL3(glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(15.0f, 4.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
-		// white 
-		PointLight pointL4(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-2.0f, 1.0f, -2.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// green
+		PointLight pointL4(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL4);
+		// white
+		PointLight pointL6(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 3.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL6);
+		// pink
+		PointLight pointL7(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 4.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL7);
+		// white 
+		PointLight pointL5(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL5);
+		
+		
 
 		#pragma endregion
 
@@ -324,6 +341,8 @@ int main(int argc, char** argv)
 			mainBox.drawShader(depthShader.get());
 			mainBox2.drawShader(depthShader.get());
 			mainBox3.drawShader(depthShader.get());
+
+			videoScreen.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
@@ -340,14 +359,20 @@ int main(int argc, char** argv)
 			mainBox.draw();
 			mainBox2.draw();
 			mainBox3.draw();
+			
+			videoScreen.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
 
 			// light cubes
-			for (int i = 0; i < pointLights.size(); i++) {
-				PointLight& pointL = pointLights[i];
-				Geometry lightbox(glm::translate(glm::mat4(1.0f), pointL._position), Geometry::createCubeGeometry(0.5f, 0.5f, 0.5f), lightMaterial);
+			for (int i = 1; i <= pointLights.size(); i++) {
+				PointLight& pointL = pointLights[i-1];
+
+				glm::mat4 trans = glm::mat4(1.0f);
+				trans = glm::translate(trans, pointL._position);
+				trans = glm::rotate(trans, glm::radians(15.0f * i), glm::vec3(1.0, 1.0, 1.0));
+				Geometry lightbox(trans , Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), lightMaterial);
 
 				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
 				lightbox.drawShader(lightShader.get());
@@ -371,10 +396,13 @@ int main(int argc, char** argv)
 			}
 
 			// draw user interface
-			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+			_ui -> updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
 
 			// bloom (fragments and render to quad)
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
+
+			// update video texture
+			videoTexture->updateVideo(dt);
 
 			// bullet
 			bulletWorld.stepSimulation(
@@ -387,7 +415,7 @@ int main(int argc, char** argv)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, shadowMapTexture->getHandle());
 			// _quadGeometry.renderQuad(); // remove comment to see shadow map for debug
-
+			
 			// Swap buffers
 			glfwSwapBuffers(window);
 		}
