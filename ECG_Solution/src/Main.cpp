@@ -201,12 +201,14 @@ int main(int argc, char** argv)
 		std::shared_ptr<Texture> justDoItTexture = std::make_shared<Texture>("assets/textures/videotextures/justdoit/frame_191.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> goodGameTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/brick.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
+		std::shared_ptr<Material> brickTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, brickTexture);
 		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
 		std::shared_ptr<Material> goodGameTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, goodGameTexture);
 		std::shared_ptr<Material> justDoItTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, justDoItTexture);
@@ -218,6 +220,8 @@ int main(int argc, char** argv)
 		// Create geometry
 		Geometry goodGameScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), goodGameTextureMaterial);
 		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.01f), justDoItTextureMaterial);
+		Geometry justDoItWall(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.25f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), woodTextureMaterial);
+		std::shared_ptr<BulletBody> btWall = std::make_shared<BulletBody>(btObject, Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), 0.0f, true, glm::vec3(0.0f, 2.5f, -4.25f), bulletWorld._world);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -290,19 +294,18 @@ int main(int argc, char** argv)
 		pointLights.push_back(pointL3);
 		// green
 		std::shared_ptr<PointLight> pointL4 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL4);
-		// white
-		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 10.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL6);
 		// pink
 		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 6.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL7);
-		// white 
-		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
-		pointLights.push_back(pointL5);
 		// pink
 		std::shared_ptr<PointLight> pointL8 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(-25.0f, 3.5f, 20.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL8);
+		// white 
+		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL5);
+		// white
+		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 10.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL6);
 
 
 		// light cubes
@@ -367,6 +370,7 @@ int main(int argc, char** argv)
 
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
+			justDoItWall.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
@@ -390,6 +394,7 @@ int main(int argc, char** argv)
 
 			justDoItScreen.draw();
 			goodGameScreen.draw();
+			justDoItWall.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();

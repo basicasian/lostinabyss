@@ -93,6 +93,8 @@ public:
 	 */
 	void draw();
 
+	void drawNormal();
+
 	void drawShader(Shader* shader);
 
 	/*!

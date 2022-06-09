@@ -36,11 +36,11 @@ uniform struct PointLight {
 	vec3 attenuation; // x = light.constant, y = light.linear, z = light.quadratic
 } ;
 
-#define NR_DIR_LIGHTS 3
+#define NR_DIR_LIGHTS 1
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
 
-#define NR_POINT_LIGHTS 8
+#define NR_POINT_LIGHTS 6 // last two point lights are white lights (unnecessary)
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {
