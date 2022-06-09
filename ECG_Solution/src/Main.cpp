@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 
 		// Create geometry
 		Geometry goodGameScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), goodGameTextureMaterial);
-		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), justDoItTextureMaterial);
+		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.01f), justDoItTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
