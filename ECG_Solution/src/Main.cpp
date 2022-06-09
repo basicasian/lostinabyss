@@ -294,11 +294,12 @@ int main(int argc, char** argv)
 		pointLights.push_back(pointL3);
 		// green
 		std::shared_ptr<PointLight> pointL4 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL4);
 		// pink
-		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 6.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(4.0f, 0.0f, 4.0f), glm::vec3(20.0f, 6.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL7);
 		// pink
-		std::shared_ptr<PointLight> pointL8 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(-25.0f, 3.5f, 20.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL8 = std::make_shared<PointLight>(glm::vec3(4.0f, 0.0f, 4.0f), glm::vec3(-25.0f, 3.5f, 20.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL8);
 		// white 
 		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
