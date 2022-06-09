@@ -131,4 +131,6 @@ public:
 	 */
 	static GeometryData createSphereGeometry(unsigned int longitudeSegments, unsigned int latitudeSegments, float radius);
 
+	void setModelMatrix(glm::mat4 modelMatrix);
+
 };

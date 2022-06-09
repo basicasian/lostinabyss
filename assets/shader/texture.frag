@@ -40,7 +40,7 @@ uniform struct PointLight {
 uniform DirectionalLight dirLights[NR_DIR_LIGHTS];
 uniform sampler2D shadowTextures[NR_DIR_LIGHTS];
 
-#define NR_POINT_LIGHTS 4
+#define NR_POINT_LIGHTS 7
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 
 vec3 phong(vec3 normal, vec3 lightDir, vec3 viewDir, vec3 diffuseC, float diffuseF, vec3 specularC, float specularF, float alpha, bool attenuate, vec3 attenuation) {

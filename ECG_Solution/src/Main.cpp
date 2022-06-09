@@ -36,9 +36,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void poll_keys(GLFWwindow* window, double dt);
 
-void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights);
+void setPerFrameUniformsTexture(Shader* shader,std::vector<DirectionalLight> dirLights, std::vector<std::shared_ptr<PointLight>> pointLights);
 void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight> dirLights);
-void setPerFrameUniformsLight(Shader* shader, PointLight& pointL, std::shared_ptr<Material> lightMaterial);
+void setPerFrameUniformsLight(Shader* shader, std::shared_ptr<PointLight> pointL);
 
 glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 
@@ -66,7 +66,7 @@ float _brightness;
 float exposure = 1.0f;
 
 std::vector<DirectionalLight> dirLights;
-std::vector<PointLight> pointLights;
+std::vector<std::shared_ptr<PointLight>> pointLights;
 
 /* --------------------------------------------- */
 // Main
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
 		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_0.jpg", shadowMapTexture->getHandle(), "video");
-		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/platform.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
@@ -214,10 +214,6 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry mainBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0f, 5.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
-		Geometry mainBox2(glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
-		Geometry mainBox3(glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, -2.0f, -3.0f)), Geometry::createCubeGeometry(1.5f, 0.5f, 1.5f), imageTextureMaterial);
-
 		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), videoTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
@@ -242,6 +238,16 @@ int main(int argc, char** argv)
 			else {
 				BulletBody btScene(btPlatform, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
+		}
+
+		std::vector<std::shared_ptr<Geometry>> balls;
+		std::vector< std::shared_ptr<BulletBody>> bulletBalls;
+
+		for (int i = 0; i < 20; i++) {
+			std::shared_ptr<Geometry> ball = std::make_shared<Geometry>(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createSphereGeometry(15.0f, 15.0f, 0.5f), imageTextureMaterial);
+			std::shared_ptr<BulletBody> btBall = std::make_shared<BulletBody>(btObject, Geometry::createSphereGeometry(5.0f, 5.0f, 0.5f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
+			balls.push_back(ball);
+			bulletBalls.push_back(btBall);
 		}
 		
 		// Initialize help classes
@@ -271,28 +277,42 @@ int main(int argc, char** argv)
 
 		#pragma region point lights
 		// turqoise
-		PointLight pointL2(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL2 = std::make_shared<PointLight> (glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// turqoise
-		PointLight pointL1(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL1 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL1);
 		// yellow
-		PointLight pointL3(glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(15.0f, 4.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL3 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 0.0f), glm::vec3(15.0f, 4.0f, 1.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL3);
 		// green
-		PointLight pointL4(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL4 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL4);
 		// white
-		PointLight pointL6(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 3.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 3.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL6);
 		// pink
-		PointLight pointL7(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 4.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 4.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL7);
 		// white 
-		PointLight pointL5(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL5);
-		
-		
+
+
+		std::vector< std::shared_ptr<Geometry>> lights;
+
+		// light cubes
+		for (int i = 0; i < pointLights.size(); i++) {
+			std::shared_ptr<PointLight> pointL = pointLights[i];
+
+			glm::mat4 trans = glm::mat4(1.0f);
+			trans = glm::translate(trans, pointL->_position);
+			trans = glm::rotate(trans, glm::radians(1.0f * i), glm::vec3(1.0, 1.0, 1.0));
+			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), lightMaterial);
+			BulletBody btLight(btObject, Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), 0.0f, true, pointL->_position, bulletWorld._world);
+			lights.push_back(lightbox);
+
+		}
 
 		#pragma endregion
 
@@ -339,14 +359,13 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->bind();
 
-			mainBox.drawShader(depthShader.get());
-			mainBox2.drawShader(depthShader.get());
-			mainBox3.drawShader(depthShader.get());
-
 			videoScreen.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
+			for (int i = 0; i < balls.size(); i++) {
+				balls.at(i)->drawShader(depthShader.get());
+			}
 
 			shadowMapTexture->resetViewPort();
 
@@ -357,26 +376,24 @@ int main(int argc, char** argv)
 			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
 
 			// render
-			mainBox.draw();
-			mainBox2.draw();
-			mainBox3.draw();
+
+			for (int i = 0; i < balls.size(); i++) {
+				balls.at(i)->draw();
+				balls.at(i)->setModelMatrix(glm::translate(glm::mat4(1.0f), bulletBalls.at(i)->getPosition()));
+			}
+
 			
 			videoScreen.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
 
+			for (std::shared_ptr<Geometry> light : lights) {
+				light->drawShader(lightShader.get());
+			}
 			// light cubes
-			for (int i = 1; i <= pointLights.size(); i++) {
-				PointLight& pointL = pointLights[i-1];
-
-				glm::mat4 trans = glm::mat4(1.0f);
-				trans = glm::translate(trans, pointL._position);
-				trans = glm::rotate(trans, glm::radians(15.0f * i), glm::vec3(1.0, 1.0, 1.0));
-				Geometry lightbox(trans , Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), lightMaterial);
-
-				setPerFrameUniformsLight(lightShader.get(), pointL, lightMaterial);
-				lightbox.drawShader(lightShader.get());
+			for (int i = 0; i < pointLights.size(); i++) {
+				setPerFrameUniformsLight(lightShader.get(), pointLights[i]);
 			}
 
 			double t = glfwGetTime();
@@ -450,23 +467,21 @@ void setPerFrameUniformsDepth(Shader* depthShader, std::vector<DirectionalLight>
 }
 
 
-void setPerFrameUniformsLight(Shader* shader, PointLight& pointL, std::shared_ptr<Material> lightMaterial)
+void setPerFrameUniformsLight(Shader* shader, std::shared_ptr<PointLight> pointL)
 {
 	shader->use();
 
 	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
 	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
-	shader->setUniform("lightColor", pointL._color);
+	shader->setUniform("lightColor", pointL->_color);
 
 }
 
 
-void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<PointLight> pointLights)
+void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> dirLights, std::vector<std::shared_ptr<PointLight>> pointLights)
 {
 	shader->use();
-	//shader->setUniform("viewProjMatrix", camera.getViewProjectionMatrix());
-	//shader->setUniform("camera_world", camera.getPosition());
 	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
 	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
@@ -477,12 +492,15 @@ void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> di
 		shader->setUniform("dirLights[" + std::to_string(i) + "].direction", dirL._direction);
 		shader->setUniform("lightSpaceMatrix", dirL._lightSpaceMatrix);
 	}
+
 	for (int i = 0; i < pointLights.size(); i++) {
-		PointLight& pointL = pointLights[i];
-		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL._color);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL._position);
-		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL._attenuation);
+		std::shared_ptr<PointLight> pointL = pointLights[i];
+		std::cout << pointL->_color.x << "," << pointL->_color.y << "," << pointL->_color.z << std::endl;
+		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL->_color);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL->_position);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL->_attenuation);
 	}
+	
 }
 
 

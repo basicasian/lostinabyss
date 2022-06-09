@@ -343,5 +343,9 @@ GeometryData Geometry::createSphereGeometry(unsigned int longitudeSegments, unsi
 	return std::move(data);
 }
 
+void Geometry::setModelMatrix(glm::mat4 modelMatrix) {
+	_modelMatrix = modelMatrix;
+}
+
 
 
