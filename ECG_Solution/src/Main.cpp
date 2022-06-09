@@ -217,8 +217,8 @@ int main(int argc, char** argv)
 		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), videoTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		BulletBody btCat(btObject, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
+		//ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
+		//BulletBody btCat(btObject, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 		std::vector<std::shared_ptr<Geometry>> balls;
 		std::vector< std::shared_ptr<BulletBody>> bulletBalls;
 
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 10; i++) {
 			std::shared_ptr<Geometry> ball = std::make_shared<Geometry>(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createSphereGeometry(15.0f, 15.0f, 0.5f), imageTextureMaterial);
 			std::shared_ptr<BulletBody> btBall = std::make_shared<BulletBody>(btObject, Geometry::createSphereGeometry(5.0f, 5.0f, 0.5f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
 			balls.push_back(ball);
@@ -360,8 +360,8 @@ int main(int argc, char** argv)
 			shadowMapTexture->bind();
 
 			videoScreen.drawShader(depthShader.get());
-			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
-			cat.DrawShader(depthShader.get());
+			//cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			//cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
 			for (int i = 0; i < balls.size(); i++) {
 				balls.at(i)->drawShader(depthShader.get());
@@ -384,8 +384,8 @@ int main(int argc, char** argv)
 
 			
 			videoScreen.draw();
-			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
-			cat.Draw();
+			//cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
+			//cat.Draw();
 			scene.Draw();
 
 			for (std::shared_ptr<Geometry> light : lights) {
