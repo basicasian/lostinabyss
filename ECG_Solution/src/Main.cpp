@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
-		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_0.jpg", shadowMapTexture->getHandle(), "video");
+		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
