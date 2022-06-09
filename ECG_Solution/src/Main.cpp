@@ -289,29 +289,32 @@ int main(int argc, char** argv)
 		std::shared_ptr<PointLight> pointL4 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(-30.0f, 14.0f, 35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL4);
 		// white
-		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 3.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 10.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL6);
 		// pink
-		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 4.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL7 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(20.0f, 6.0f, -35.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL7);
 		// white 
 		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL5);
+		// pink
+		std::shared_ptr<PointLight> pointL8 = std::make_shared<PointLight>(glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(-25.0f, 3.5f, 20.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		pointLights.push_back(pointL8);
 
-
-		std::vector< std::shared_ptr<Geometry>> lights;
 
 		// light cubes
+		std::vector< std::shared_ptr<Geometry>> lightCubes;
+
 		for (int i = 0; i < pointLights.size(); i++) {
 			std::shared_ptr<PointLight> pointL = pointLights[i];
 
 			glm::mat4 trans = glm::mat4(1.0f);
 			trans = glm::translate(trans, pointL->_position);
 			trans = glm::rotate(trans, glm::radians(1.0f * i), glm::vec3(1.0, 1.0, 1.0));
-			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), lightMaterial);
-			BulletBody btLight(btObject, Geometry::createCubeGeometry(1.0f * i, 1.0f * i, 1.0f * i), 0.0f, true, pointL->_position, bulletWorld._world);
-			lights.push_back(lightbox);
+			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(1.0f * i + 1.0f, 1.0f * i + 1.0f, 1.0f * i + 1.0f), lightMaterial);
 
+			BulletBody btLight(btObject, Geometry::createCubeGeometry(1.0f * i + 1.0f, 1.0f * i + 1.0f, 1.0f * i + 1.0f), 0.0f, true, pointL->_position, bulletWorld._world);
+			lightCubes.push_back(lightbox);
 		}
 
 		#pragma endregion
@@ -376,7 +379,6 @@ int main(int argc, char** argv)
 			setPerFrameUniformsTexture(textureShader.get(), dirLights, pointLights);
 
 			// render
-
 			for (int i = 0; i < balls.size(); i++) {
 				balls.at(i)->draw();
 				balls.at(i)->setModelMatrix(glm::translate(glm::mat4(1.0f), bulletBalls.at(i)->getPosition()));
@@ -388,12 +390,10 @@ int main(int argc, char** argv)
 			cat.Draw();
 			scene.Draw();
 
-			for (std::shared_ptr<Geometry> light : lights) {
-				light->drawShader(lightShader.get());
-			}
 			// light cubes
 			for (int i = 0; i < pointLights.size(); i++) {
-				setPerFrameUniformsLight(lightShader.get(), pointLights[i]);
+				setPerFrameUniformsLight(lightShader.get(), pointLights[i]);	
+				lightCubes[i] -> drawShader(lightShader.get());
 			}
 
 			double t = glfwGetTime();
@@ -416,7 +416,7 @@ int main(int argc, char** argv)
 			// draw user interface
 			_ui -> updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
 
-			// bloom (fragments and render to quad)
+			// bloom (fragments and render to quad) - has to be after all draw calls!
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
 			// update video texture
