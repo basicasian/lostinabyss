@@ -198,7 +198,8 @@ int main(int argc, char** argv)
 		// Create textures
 		std::shared_ptr<ShadowMapTexture> shadowMapTexture = std::make_shared<ShadowMapTexture>(window_width, window_height);
 
-		std::shared_ptr<Texture> videoTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
+		std::shared_ptr<Texture> justDoItTexture = std::make_shared<Texture>("assets/textures/videotextures/justdoit/frame_191.jpg", shadowMapTexture->getHandle(), "video");
+		std::shared_ptr<Texture> goodGameTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
@@ -207,14 +208,16 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
-		std::shared_ptr<Material> videoTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, videoTexture);
+		std::shared_ptr<Material> goodGameTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, goodGameTexture);
+		std::shared_ptr<Material> justDoItTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, justDoItTexture);
 
 		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry videoScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), videoTextureMaterial);
+		Geometry goodGameScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), goodGameTextureMaterial);
+		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), justDoItTextureMaterial);
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -362,7 +365,8 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->bind();
 
-			videoScreen.drawShader(depthShader.get());
+			goodGameScreen.drawShader(depthShader.get());
+			justDoItScreen.drawShader(depthShader.get());
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
@@ -384,8 +388,8 @@ int main(int argc, char** argv)
 				balls.at(i)->setModelMatrix(glm::translate(glm::mat4(1.0f), bulletBalls.at(i)->getPosition()));
 			}
 
-			
-			videoScreen.draw();
+			justDoItScreen.draw();
+			goodGameScreen.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
@@ -420,7 +424,8 @@ int main(int argc, char** argv)
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
 			// update video texture
-			videoTexture->updateVideo(dt);
+			goodGameTexture->updateVideo(dt);
+			justDoItTexture->updateVideo(dt);
 
 			// bullet
 			bulletWorld.stepSimulation(

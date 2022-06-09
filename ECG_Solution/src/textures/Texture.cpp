@@ -72,6 +72,10 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 			// create string of file
 			if (i < 10) {
 				path.append("0");
+			} 
+			// create string of file
+			if (i < 100 && _frameNumber > 100) {
+				path.append("0");
 			}
 			path.append(std::to_string(i));
 			path.append(filepost);
