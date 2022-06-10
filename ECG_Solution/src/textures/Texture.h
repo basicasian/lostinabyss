@@ -20,13 +20,14 @@ protected:
 
 	GLuint _handle;
 	GLuint _depthMap;
+	GLuint _normalMap;
 
 	string _type;
 	int _width, _height;
 
 	// for video
-	int _frameNumber = 48;
-	unsigned char* _imageData[48];
+	int _frameNumber;
+	unsigned char* _imageData[999];
 
 	double _frameRate = 1 / 30.;
 	double _time = 0;
@@ -48,6 +49,12 @@ public:
 	 * @param unit: the texture unit
 	 */
 	void bind(unsigned int unit);
+
+	void bindNormal(unsigned int unit);
+
+	GLuint getHandle();
+
+	void setNormalMap(GLuint normalMap);
 
 	void updateVideo(double dt);
 

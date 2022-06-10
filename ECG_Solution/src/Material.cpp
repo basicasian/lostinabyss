@@ -70,3 +70,14 @@ void TextureMaterial::setUniforms()
 	_shader->setUniform("shadowTexture", 1);
 
 }
+
+void TextureMaterial::setNormalUniforms()
+{
+	Material::setUniforms();
+
+	_diffuseTexture->bindNormal(0);
+	_shader->setUniform("diffuseTexture", 0);
+	_shader->setUniform("shadowTexture", 1);
+	_shader->setUniform("normalTexture", 2);
+
+}

@@ -54,31 +54,43 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 		// load images	
 		_width = 500;
 		_height = 226;
-		for (int i = 0; i < _frameNumber; i++) {
 
-			std::size_t pos = file.find(".");
-			std::string begin = file.substr(0, pos-1);
-			std::string end = file.substr(pos);
+		// get number of frames
+		unsigned first = file.find("_");
+		unsigned last = file.find(".");
+		std::string filepre = file.substr(0, first+1);
+		std::string filepost = file.substr(last);
+
+		std::string frameNumber = file.substr(first+1, last - first -1);
+		_frameNumber = std::stoi(frameNumber);
+
+		for (int i = 0; i <= _frameNumber; i++) {
+			
+			std::string path;
+			path.append(filepre);
 
 			// create string of file
-			std::string filename = begin;
 			if (i < 10) {
-				filename.append("0");
+				path.append("0");
+			} 
+			// create string of file
+			if (i < 100 && _frameNumber > 100) {
+				path.append("0");
 			}
-			filename.append(std::to_string(i));
-			filename.append(end);
+			path.append(std::to_string(i));
+			path.append(filepost);
 
-			// std::cout << filename << std::endl;
+			// std::cout << path << std::endl;
 
 			// load file to data structure
 			int width, height, nrChannels;
 
 			stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis
-			_imageData[i] = stbi_load(filename.c_str(), &_width, &_height, &nrChannels, 0);
+			_imageData[i] = stbi_load(path.c_str(), &_width, &_height, &nrChannels, 0);
 			stbi_set_flip_vertically_on_load(false); // set it right for other textures
 			if (!_imageData[i])
 			{
-				std::cout << "Texture failed to load at path: " << filename << std::endl;
+				std::cout << "Texture failed to load at path: " << path << std::endl;
 			}
 		}
 		// generate texture
@@ -103,6 +115,26 @@ void Texture::bind(unsigned int unit) {
 
 	glActiveTexture(GL_TEXTURE1 + unit);
 	glBindTexture(GL_TEXTURE_2D, _depthMap);
+}
+
+void Texture::bindNormal(unsigned int unit) {
+
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, _handle);
+
+	glActiveTexture(GL_TEXTURE1 + unit);
+	glBindTexture(GL_TEXTURE_2D, _depthMap);
+
+	glActiveTexture(GL_TEXTURE2 + unit);
+	glBindTexture(GL_TEXTURE_2D, _normalMap);
+}
+
+void Texture::setNormalMap(GLuint normalMap) {
+	_normalMap = normalMap;
+}
+
+GLuint Texture::getHandle() {
+	return _handle;
 }
 
 Texture::~Texture()
