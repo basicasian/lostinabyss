@@ -72,6 +72,20 @@ void Geometry::draw()
 	glBindVertexArray(0);
 }
 
+void Geometry::drawNormal()
+{
+	Shader* shader = _material->getShader();
+	shader->use();
+
+	shader->setUniform("modelMatrix", _modelMatrix);
+	shader->setUniform("normalMatrix", glm::mat3(glm::transpose(glm::inverse(_modelMatrix))));
+	_material->setUniforms();
+
+	glBindVertexArray(_vao);
+	glDrawElements(GL_TRIANGLES, _elements, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
 void Geometry::drawShader(Shader* shader)
 {
 	// Shader* shader = _depthMaterial->getShader();

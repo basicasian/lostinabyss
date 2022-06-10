@@ -50,6 +50,7 @@ static bool _wireframe = false;
 static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
+static bool _normalToggle = true;
 static float _zoom = 6.0f;
 static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 
@@ -202,8 +203,12 @@ int main(int argc, char** argv)
 		std::shared_ptr<Texture> goodGameTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/brick.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/brick_normal.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
+
+		// set normal map 
+		brickTexture->setNormalMap(brickNormalTexture->getHandle());
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
@@ -222,6 +227,10 @@ int main(int argc, char** argv)
 		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.01f), justDoItTextureMaterial);
 		Geometry justDoItWall(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.25f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), woodTextureMaterial);
 		std::shared_ptr<BulletBody> btWall = std::make_shared<BulletBody>(btObject, Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), 0.0f, true, glm::vec3(0.0f, 2.5f, -4.25f), bulletWorld._world);
+
+		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
+		BulletBody btTestBall(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
+
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
 		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
@@ -284,7 +293,7 @@ int main(int argc, char** argv)
 
 		#pragma region point lights
 		// turqoise
-		std::shared_ptr<PointLight> pointL2 = std::make_shared<PointLight> (glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL2 = std::make_shared<PointLight> (glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// turqoise
 		std::shared_ptr<PointLight> pointL1 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
@@ -369,6 +378,7 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->bind();
 
+			testBox.drawShader(depthShader.get());
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
 			justDoItWall.drawShader(depthShader.get());
@@ -392,6 +402,15 @@ int main(int argc, char** argv)
 				balls.at(i)->draw();
 				balls.at(i)->setModelMatrix(glm::translate(glm::mat4(1.0f), bulletBalls.at(i)->getPosition()));
 			}
+
+			if (_normalToggle) {
+				textureShader->use();
+				textureShader->setUniform("ifNormal", true);
+			}			
+			testBox.draw();
+			testBox.setModelMatrix(glm::translate(glm::mat4(1.0f), btTestBall.getPosition()));
+			textureShader->use();
+			textureShader->setUniform("ifNormal", false);
 
 			justDoItScreen.draw();
 			goodGameScreen.draw();
@@ -424,7 +443,8 @@ int main(int argc, char** argv)
 			}
 
 			// draw user interface
-			_ui -> updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+			
 
 			// bloom (fragments and render to quad) - has to be after all draw calls!
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
@@ -588,6 +608,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		break;
 	}
+	
 }
 
 static void APIENTRY DebugCallbackDefault(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam) {

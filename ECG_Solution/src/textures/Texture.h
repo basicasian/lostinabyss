@@ -20,6 +20,7 @@ protected:
 
 	GLuint _handle;
 	GLuint _depthMap;
+	GLuint _normalMap;
 
 	string _type;
 	int _width, _height;
@@ -48,6 +49,12 @@ public:
 	 * @param unit: the texture unit
 	 */
 	void bind(unsigned int unit);
+
+	void bindNormal(unsigned int unit);
+
+	GLuint getHandle();
+
+	void setNormalMap(GLuint normalMap);
 
 	void updateVideo(double dt);
 

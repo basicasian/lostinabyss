@@ -80,7 +80,7 @@ Texture::Texture(std::string file, GLuint depthMap, string type) : _init(true), 
 			path.append(std::to_string(i));
 			path.append(filepost);
 
-			std::cout << path << std::endl;
+			// std::cout << path << std::endl;
 
 			// load file to data structure
 			int width, height, nrChannels;
@@ -115,6 +115,26 @@ void Texture::bind(unsigned int unit) {
 
 	glActiveTexture(GL_TEXTURE1 + unit);
 	glBindTexture(GL_TEXTURE_2D, _depthMap);
+}
+
+void Texture::bindNormal(unsigned int unit) {
+
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, _handle);
+
+	glActiveTexture(GL_TEXTURE1 + unit);
+	glBindTexture(GL_TEXTURE_2D, _depthMap);
+
+	glActiveTexture(GL_TEXTURE2 + unit);
+	glBindTexture(GL_TEXTURE_2D, _normalMap);
+}
+
+void Texture::setNormalMap(GLuint normalMap) {
+	_normalMap = normalMap;
+}
+
+GLuint Texture::getHandle() {
+	return _handle;
 }
 
 Texture::~Texture()

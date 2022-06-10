@@ -96,4 +96,5 @@ public:
 	 */
 	virtual void setUniforms();
 
+	virtual void setNormalUniforms();
 };
