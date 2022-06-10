@@ -205,8 +205,10 @@ int main(int argc, char** argv)
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> furTexture = std::make_shared<Texture>("assets/textures/fur.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> furNormalTexture = std::make_shared<Texture>("assets/textures/fur_normal.jpg", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/abstract.jpg", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/abstract_normal.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> abstractTexture = std::make_shared<Texture>("assets/textures/abstract.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> abstractNormalTexture = std::make_shared<Texture>("assets/textures/abstract_normal.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/brick.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/brick_normal.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodNormalTexture = std::make_shared<Texture>("assets/textures/wood_normal.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
@@ -215,12 +217,14 @@ int main(int argc, char** argv)
 		brickTexture->setNormalMap(brickNormalTexture->getHandle());
 		woodTexture->setNormalMap(woodNormalTexture->getHandle());
 		furTexture->setNormalMap(furNormalTexture->getHandle());
+		abstractTexture->setNormalMap(abstractNormalTexture->getHandle());
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> brickTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, brickTexture);
 		std::shared_ptr<Material> furTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, furTexture);
+		std::shared_ptr<Material> abstractTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, abstractTexture);
 		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
 		std::shared_ptr<Material> goodGameTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, goodGameTexture);
 		std::shared_ptr<Material> justDoItTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, justDoItTexture);
@@ -235,10 +239,12 @@ int main(int argc, char** argv)
 		Geometry justDoItWall(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.25f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), woodTextureMaterial);
 		std::shared_ptr<BulletBody> btWall = std::make_shared<BulletBody>(btObject, Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), 0.0f, true, glm::vec3(0.0f, 2.5f, -4.25f), bulletWorld._world);
 
-		Geometry box1(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
-		BulletBody btBox1(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
-		Geometry box2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), furTextureMaterial);
-		BulletBody btBox2(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
+		Geometry box1(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 5.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), abstractTextureMaterial);
+		BulletBody btBox1(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 5.0f), bulletWorld._world);
+		Geometry box2(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 5.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), furTextureMaterial);
+		BulletBody btBox2(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(3.0f, 3.0f, 5.0f), bulletWorld._world);
+		Geometry box3(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 5.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
+		BulletBody btBox3(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(3.0f, 3.0f, 5.0f), bulletWorld._world);
 
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
@@ -389,6 +395,7 @@ int main(int argc, char** argv)
 
 			box1.drawShader(depthShader.get());
 			box2.drawShader(depthShader.get());
+			box3.drawShader(depthShader.get());
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
 			justDoItWall.drawShader(depthShader.get());
@@ -423,6 +430,8 @@ int main(int argc, char** argv)
 			box1.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox1.getPosition()));
 			box2.draw();
 			box2.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox2.getPosition()));
+			box3.draw();
+			box3.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox3.getPosition()));
 			textureShader->use();
 			textureShader->setUniform("ifNormal", false);
 
