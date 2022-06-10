@@ -23,6 +23,7 @@ uniform float specularAlpha;
 uniform sampler2D diffuseTexture;
 uniform sampler2D normalTexture;
 uniform bool ifNormal = false;
+uniform bool lightsOn; // when lightsOn = falseonly one point light is active 
 
 uniform sampler2D shadowTexture;
 uniform mat4 lightSpaceMatrix;
@@ -139,17 +140,26 @@ void main() {
 
 	// phase 1: Directional lighting
 	// add directional light contribution
+	
+	if (lightsOn) {
 	for(int i = 0; i < NR_DIR_LIGHTS; i++) {
 	// phase 1.5: Shadow Mapping
 	// calculate shadow
 	float shadow = ShadowCalculation(lightSpaceMatrix * vert.FragPosLightSpace, normal, -dirLights[i].direction);  
 	 result += (1-shadow) * brightness * phong(normal, -dirLights[i].direction, viewDir, dirLights[i].color * texColor, materialCoefficients.y, dirLights[i].color, materialCoefficients.z, specularAlpha, false, vec3(0));
 	}
+	}
 	// phase 2: Point lights
 	// add point light contribution
+	if (lightsOn) {
 	for(int i = 0; i < NR_POINT_LIGHTS; i++){
 	 result += brightness * phong(normal, pointLights[i].position - vert.position_world, viewDir, pointLights[i].color * texColor, materialCoefficients.y, pointLights[i].color, materialCoefficients.z, specularAlpha, true, pointLights[i].attenuation);
 	}
+	} else {
+		 result += brightness * phong(normal, pointLights[0].position - vert.position_world, viewDir, pointLights[0].color * texColor, materialCoefficients.y, pointLights[0].color, materialCoefficients.z, specularAlpha, true, pointLights[0].attenuation);
+
+	}	
+	
 
 	// phase 3: Bloom
 	// calculated brightness for bloom effect

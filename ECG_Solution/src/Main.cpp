@@ -51,6 +51,7 @@ static bool _culling = true;
 static bool _dragging = false;
 static bool _strafing = false;
 static bool _normalToggle = true;
+static bool _lightsOn = true;
 static float _zoom = 6.0f;
 static CameraPlayer _player(glm::vec3(0.0f, 5.0f, 0.0f));
 
@@ -202,18 +203,24 @@ int main(int argc, char** argv)
 		std::shared_ptr<Texture> justDoItTexture = std::make_shared<Texture>("assets/textures/videotextures/justdoit/frame_191.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> goodGameTexture = std::make_shared<Texture>("assets/textures/videotextures/goodgame/frame_47.jpg", shadowMapTexture->getHandle(), "video");
 		std::shared_ptr<Texture> imageTexture = std::make_shared<Texture>("assets/textures/smiley.png", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/brick.jpg", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/brick_normal.jpg", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood_texture.dds", shadowMapTexture->getHandle(), "dds");
+		std::shared_ptr<Texture> furTexture = std::make_shared<Texture>("assets/textures/fur.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> furNormalTexture = std::make_shared<Texture>("assets/textures/fur_normal.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickTexture = std::make_shared<Texture>("assets/textures/abstract.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/abstract_normal.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood.jpg", shadowMapTexture->getHandle(), "image");
+		std::shared_ptr<Texture> woodNormalTexture = std::make_shared<Texture>("assets/textures/wood_normal.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
 		// set normal map 
 		brickTexture->setNormalMap(brickNormalTexture->getHandle());
+		woodTexture->setNormalMap(woodNormalTexture->getHandle());
+		furTexture->setNormalMap(furNormalTexture->getHandle());
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
 		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> brickTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, brickTexture);
+		std::shared_ptr<Material> furTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, furTexture);
 		std::shared_ptr<Material> imageTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, imageTexture);
 		std::shared_ptr<Material> goodGameTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, goodGameTexture);
 		std::shared_ptr<Material> justDoItTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, justDoItTexture);
@@ -228,8 +235,10 @@ int main(int argc, char** argv)
 		Geometry justDoItWall(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.25f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), woodTextureMaterial);
 		std::shared_ptr<BulletBody> btWall = std::make_shared<BulletBody>(btObject, Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), 0.0f, true, glm::vec3(0.0f, 2.5f, -4.25f), bulletWorld._world);
 
-		Geometry testBox(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
-		BulletBody btTestBall(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
+		Geometry box1(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
+		BulletBody btBox1(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
+		Geometry box2(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), furTextureMaterial);
+		BulletBody btBox2(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
 
 
 		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
@@ -292,8 +301,8 @@ int main(int argc, char** argv)
 		#pragma endregion
 
 		#pragma region point lights
-		// turqoise
-		std::shared_ptr<PointLight> pointL2 = std::make_shared<PointLight> (glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(10.0f, 1.0f, -10.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		// white
+		std::shared_ptr<PointLight> pointL2 = std::make_shared<PointLight> (glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL2);
 		// turqoise
 		std::shared_ptr<PointLight> pointL1 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(7.0f, 1.5f, 5.0f), glm::vec3(1.0f, 0.7f, 1.8f));
@@ -314,7 +323,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<PointLight> pointL5 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-25.0f, 5.0f, -25.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL5);
 		// white
-		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(20.0f, 10.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
+		std::shared_ptr<PointLight> pointL6 = std::make_shared<PointLight>(glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(20.0f, 10.0f, 15.0f), glm::vec3(1.0f, 0.7f, 1.8f));
 		pointLights.push_back(pointL6);
 
 
@@ -327,9 +336,9 @@ int main(int argc, char** argv)
 			glm::mat4 trans = glm::mat4(1.0f);
 			trans = glm::translate(trans, pointL->_position);
 			trans = glm::rotate(trans, glm::radians(1.0f * i), glm::vec3(1.0, 1.0, 1.0));
-			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(1.0f * i + 1.0f, 1.0f * i + 1.0f, 1.0f * i + 1.0f), lightMaterial);
+			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(0.5f * i + 0.5f, 0.5f * i + 0.5f, 0.5f * i + 0.5f), lightMaterial);
 
-			BulletBody btLight(btObject, Geometry::createCubeGeometry(1.0f * i + 1.0f, 1.0f * i + 1.0f, 1.0f * i + 1.0f), 0.0f, true, pointL->_position, bulletWorld._world);
+			BulletBody btLight(btObject, Geometry::createCubeGeometry(0.5f * i + 0.5f, 0.5f * i + 0.5f, 0.5f * i + 0.5f), 0.0f, true, pointL->_position, bulletWorld._world);
 			lightCubes.push_back(lightbox);
 		}
 
@@ -378,7 +387,8 @@ int main(int argc, char** argv)
 			setPerFrameUniformsDepth(depthShader.get(), dirLights);
 			shadowMapTexture->bind();
 
-			testBox.drawShader(depthShader.get());
+			box1.drawShader(depthShader.get());
+			box2.drawShader(depthShader.get());
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
 			justDoItWall.drawShader(depthShader.get());
@@ -403,18 +413,22 @@ int main(int argc, char** argv)
 				balls.at(i)->setModelMatrix(glm::translate(glm::mat4(1.0f), bulletBalls.at(i)->getPosition()));
 			}
 
+			// render all objects with normal maps here
 			if (_normalToggle) {
 				textureShader->use();
 				textureShader->setUniform("ifNormal", true);
 			}			
-			testBox.draw();
-			testBox.setModelMatrix(glm::translate(glm::mat4(1.0f), btTestBall.getPosition()));
+			justDoItWall.draw();
+			box1.draw();
+			box1.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox1.getPosition()));
+			box2.draw();
+			box2.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox2.getPosition()));
 			textureShader->use();
 			textureShader->setUniform("ifNormal", false);
 
+			// all others
 			justDoItScreen.draw();
 			goodGameScreen.draw();
-			justDoItWall.draw();
 			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
 			cat.Draw();
 			scene.Draw();
@@ -516,6 +530,7 @@ void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> di
 	shader->setUniform("viewProjMatrix", _player.getProjectionViewMatrix());
 	shader->setUniform("camera_world", _player.getPosition());
 	shader->setUniform("brightness", _brightness);
+	shader->setUniform("lightsOn", _lightsOn);
 
 	for (int i = 0; i < dirLights.size(); i++) {
 		DirectionalLight& dirL = dirLights[i];
@@ -589,6 +604,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		_culling = !_culling;
 		if (_culling) glEnable(GL_CULL_FACE);
 		else glDisable(GL_CULL_FACE);
+		break;
+	case GLFW_KEY_F4:
+		_normalToggle = !_normalToggle;
+		break;
+	case GLFW_KEY_F5:
+		_lightsOn = !_lightsOn;
 		break;
 	case GLFW_KEY_F10:
 		_player.moveTo(glm::vec3(0.0f, 5.0f, 0.0f));
