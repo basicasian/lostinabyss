@@ -46,6 +46,7 @@ glm::mat4 lookAtView(glm::vec3 eye, glm::vec3 at, glm::vec3 up);
 // Global variables
 /* --------------------------------------------- */
 
+static bool _hud = true;
 static bool _wireframe = false;
 static bool _culling = true;
 static bool _dragging = false;
@@ -466,8 +467,10 @@ int main(int argc, char** argv)
 			}
 
 			// draw user interface
-			_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
-			
+			if (_hud) {
+				_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
+			}
+
 
 			// bloom (fragments and render to quad) - has to be after all draw calls!
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
@@ -614,6 +617,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		if (_culling) glEnable(GL_CULL_FACE);
 		else glDisable(GL_CULL_FACE);
 		break;
+	case GLFW_KEY_F3:
+		_hud = !_hud;
+    break;
 	case GLFW_KEY_F4:
 		_normalToggle = !_normalToggle;
 		break;
