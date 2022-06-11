@@ -230,7 +230,7 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> goodGameTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, goodGameTexture);
 		std::shared_ptr<Material> justDoItTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, justDoItTexture);
 
-		std::shared_ptr<Material> catModelMaterial = std::make_shared<TextureMaterial>(textureShader);
+		std::shared_ptr<Material> sceneMaterial = std::make_shared<TextureMaterial>(textureShader);
 		std::shared_ptr<Material> depthMaterial = std::make_shared<TextureMaterial>(depthShader);
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
@@ -248,18 +248,16 @@ int main(int argc, char** argv)
 		BulletBody btBox3(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(3.0f, 3.0f, 5.0f), bulletWorld._world);
 
 
-		glm::mat4 catModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 10.0f, 0.0f));
-		ModelLoader cat("assets/objects/cat/cat.obj", catModel, catModelMaterial);
-		BulletBody btCat(btObject, Geometry::createCubeGeometry(0.4f, 0.5f, 0.2f), 1.0f, true, glm::vec3(0.0f, 10.0f, 0.0f), bulletWorld._world);
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-		ModelLoader scene("assets/objects/scene.obj", sceneModel, catModelMaterial);
+		ModelLoader scene("assets/objects/scene.obj", sceneModel, sceneMaterial);
 		
 		for (const auto& mesh : scene.getMeshes()) {
 			string name(mesh._aiMesh->mName.C_Str());
+			
 			if (!(name.compare("hull"))) {
 				BulletBody btScene(btObject, mesh._aiMesh, mesh._transformationMatrix, 0.0f, false, bulletWorld._world);
-			} 
+			}
 			else if (!(name.compare("win"))) {
 				std::cout << "winplatform found" << std::endl;
 				winPlatform = BulletBody(btWin, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
@@ -267,15 +265,16 @@ int main(int argc, char** argv)
 			else if (!(name.compare("move"))) {
 				movingPlatform = BulletBody(btWin, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
-			else {
+			else if (name.find("Cube") != string::npos) {
 				BulletBody btScene(btPlatform, mesh._aiMesh, mesh._transformationMatrix, 0.0f, true, bulletWorld._world);
 			}
+			
 		}
 
 		std::vector<std::shared_ptr<Geometry>> balls;
 		std::vector< std::shared_ptr<BulletBody>> bulletBalls;
 
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 5; i++) {
 			std::shared_ptr<Geometry> ball = std::make_shared<Geometry>(glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 3.0f, 1.0f)), Geometry::createSphereGeometry(15.0f, 15.0f, 0.5f), imageTextureMaterial);
 			std::shared_ptr<BulletBody> btBall = std::make_shared<BulletBody>(btObject, Geometry::createSphereGeometry(5.0f, 5.0f, 0.5f), 1.0f, true, glm::vec3(1.0f, 3.0f, 1.0f), bulletWorld._world);
 			balls.push_back(ball);
@@ -400,8 +399,6 @@ int main(int argc, char** argv)
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
 			justDoItWall.drawShader(depthShader.get());
-			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
-			cat.DrawShader(depthShader.get());
 			scene.DrawShader(depthShader.get());
 			for (int i = 0; i < balls.size(); i++) {
 				balls.at(i)->drawShader(depthShader.get());
@@ -439,8 +436,6 @@ int main(int argc, char** argv)
 			// all others
 			justDoItScreen.draw();
 			goodGameScreen.draw();
-			cat.SetModelMatrix(glm::translate(glm::mat4(1.0f), btCat.getPosition()));
-			cat.Draw();
 			scene.Draw();
 
 			// light cubes
@@ -553,7 +548,6 @@ void setPerFrameUniformsTexture(Shader* shader, std::vector<DirectionalLight> di
 
 	for (int i = 0; i < pointLights.size(); i++) {
 		std::shared_ptr<PointLight> pointL = pointLights[i];
-		std::cout << pointL->_color.x << "," << pointL->_color.y << "," << pointL->_color.z << std::endl;
 		shader->setUniform("pointLights[" + std::to_string(i) + "].color", pointL->_color);
 		shader->setUniform("pointLights[" + std::to_string(i) + "].position", pointL->_position);
 		shader->setUniform("pointLights[" + std::to_string(i) + "].attenuation", pointL->_attenuation);
