@@ -212,7 +212,6 @@ int main(int argc, char** argv)
 		std::shared_ptr<Texture> brickNormalTexture = std::make_shared<Texture>("assets/textures/brick_normal.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodTexture = std::make_shared<Texture>("assets/textures/wood.jpg", shadowMapTexture->getHandle(), "image");
 		std::shared_ptr<Texture> woodNormalTexture = std::make_shared<Texture>("assets/textures/wood_normal.jpg", shadowMapTexture->getHandle(), "image");
-		std::shared_ptr<Texture> tileTexture = std::make_shared<Texture>("assets/textures/tiles_diffuse.dds", shadowMapTexture->getHandle(), "dds");
 
 		// set normal map 
 		brickTexture->setNormalMap(brickNormalTexture->getHandle());
@@ -222,7 +221,6 @@ int main(int argc, char** argv)
 
 		// Create materials
 		std::shared_ptr<Material> woodTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, woodTexture);
-		std::shared_ptr<Material> tileTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, tileTexture);
 		std::shared_ptr<Material> brickTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, brickTexture);
 		std::shared_ptr<Material> furTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, furTexture);
 		std::shared_ptr<Material> abstractTextureMaterial = std::make_shared<TextureMaterial>(textureShader, glm::vec3(0.1f, 0.5f, 0.1f), 2.0f, abstractTexture);
@@ -246,8 +244,6 @@ int main(int argc, char** argv)
 		BulletBody btBox2(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(3.0f, 3.0f, 5.0f), bulletWorld._world);
 		Geometry box3(glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 3.0f, 5.0f)), Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), brickTextureMaterial);
 		BulletBody btBox3(btObject, Geometry::createCubeGeometry(1.0f, 1.0f, 1.0f), 1.0f, true, glm::vec3(3.0f, 3.0f, 5.0f), bulletWorld._world);
-
-
 
 		glm::mat4 sceneModel = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 		ModelLoader scene("assets/objects/scene.obj", sceneModel, sceneMaterial);
