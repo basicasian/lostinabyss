@@ -338,9 +338,9 @@ int main(int argc, char** argv)
 			glm::mat4 trans = glm::mat4(1.0f);
 			trans = glm::translate(trans, pointL->_position);
 			trans = glm::rotate(trans, glm::radians(1.0f * i), glm::vec3(1.0, 1.0, 1.0));
-			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(0.5f * i + 0.5f, 0.5f * i + 0.5f, 0.5f * i + 0.5f), lightMaterial);
+			std::shared_ptr<Geometry> lightbox = std::make_shared<Geometry>(trans, Geometry::createCubeGeometry(1.0f * i + 0.5f, 1.0f * i + 0.5f, 1.0f * i + 0.5f), lightMaterial);
 
-			BulletBody btLight(btObject, Geometry::createCubeGeometry(0.5f * i + 0.5f, 0.5f * i + 0.5f, 0.5f * i + 0.5f), 0.0f, true, pointL->_position, bulletWorld._world);
+			BulletBody btLight(btObject, Geometry::createCubeGeometry(1.0f * i + 0.5f, 1.0f * i + 0.5f, 1.0f * i + 0.5f), 0.0f, true, pointL->_position, bulletWorld._world);
 			lightCubes.push_back(lightbox);
 		}
 
