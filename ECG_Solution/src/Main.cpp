@@ -457,7 +457,7 @@ int main(int argc, char** argv)
 			// check win/lose condition
 			if (!_gameLost && t - _start > _timer && !_gameWon) {
 				_gameLost = true;
-			} else if (!_gameWon) {
+			} else if (!_gameWon && !_gameLost) {
 				_gameWon = bulletWorld.checkWinCondition();
 			}
 
