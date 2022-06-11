@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	// Open window
-	monitor = nullptr;
+	monitor = NULL;
 
 	if (fullscreen)
 		monitor = glfwGetPrimaryMonitor();
@@ -629,13 +629,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	case GLFW_KEY_F11:
 
 		// glfwGetWindowMonitor(window) returns NULL if windowed
-		if (glfwGetWindowMonitor(window) == nullptr) {
-			glfwSetWindowMonitor(window, monitor, 0, 0, window_width, window_height, _refresh_rate);
+		
+		if (glfwGetWindowMonitor(window) == NULL) {
+			glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, window_width, window_height, _refresh_rate);
 		}
 		else {
-			glfwSetWindowMonitor(window, nullptr, 0, 0, window_width, window_height, _refresh_rate);
+			glfwSetWindowMonitor(window, NULL, 0, 0, window_width, window_height, _refresh_rate);
 		}
-
 		break;
 	}
 	
