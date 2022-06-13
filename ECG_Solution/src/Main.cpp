@@ -233,7 +233,8 @@ int main(int argc, char** argv)
 		std::shared_ptr<Material> lightMaterial = std::make_shared<TextureMaterial>(lightShader);
 
 		// Create geometry
-		Geometry goodGameScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 38.0f, 20.0f)), Geometry::createCubeGeometry(4.0f, 3.0f, 0.01f), goodGameTextureMaterial);
+		Geometry goodGameScreen(glm::translate(glm::mat4(1.0f), glm::vec3(-40.0f, 41.0f, 27.0f)), Geometry::createCubeGeometry(0.01f, 5.0f, 5.0f), goodGameTextureMaterial);
+		Geometry goodGameWall(glm::translate(glm::mat4(1.0f), glm::vec3(-40.25f, 41.0f, 27.0f)), Geometry::createCubeGeometry(0.5f, 5.0f, 5.0f), woodTextureMaterial);
 		Geometry justDoItScreen(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.0f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.01f), justDoItTextureMaterial);
 		Geometry justDoItWall(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, -4.25f)), Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), woodTextureMaterial);
 		std::shared_ptr<BulletBody> btWall = std::make_shared<BulletBody>(btObject, Geometry::createCubeGeometry(5.0f, 3.0f, 0.5f), 0.0f, true, glm::vec3(0.0f, 2.5f, -4.25f), bulletWorld._world);
@@ -392,6 +393,7 @@ int main(int argc, char** argv)
 			box1.drawShader(depthShader.get());
 			box2.drawShader(depthShader.get());
 			box3.drawShader(depthShader.get());
+			goodGameWall.drawShader(depthShader.get());
 			goodGameScreen.drawShader(depthShader.get());
 			justDoItScreen.drawShader(depthShader.get());
 			justDoItWall.drawShader(depthShader.get());
@@ -419,6 +421,7 @@ int main(int argc, char** argv)
 				textureShader->use();
 				textureShader->setUniform("ifNormal", true);
 			}			
+			goodGameWall.draw();
 			justDoItWall.draw();
 			box1.draw();
 			box1.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox1.getPosition()));
