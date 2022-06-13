@@ -420,8 +420,8 @@ int main(int argc, char** argv)
 			if (_normalToggle) {
 				textureShader->use();
 				textureShader->setUniform("ifNormal", true);
-			}			
-			goodGameWall.draw();
+			}
+			goodGameWall.draw();	
 			justDoItWall.draw();
 			box1.draw();
 			box1.setModelMatrix(glm::translate(glm::mat4(1.0f), btBox1.getPosition()));
