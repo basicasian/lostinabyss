@@ -42,6 +42,8 @@ private:
     // camera options
     float _movementSpeed;
     float _mouseSensitivity;
+    
+    boolean _isPressed = false;
 
     glm::mat4 _projMatrix;
 
@@ -84,4 +86,7 @@ public:
     virtual void addToWorld(BulletWorld& physicsWorld);
     virtual void moveTo(glm::vec3 newLocation);
     virtual glm::vec3 getPosition();
+
+    // set pressed jump state 
+    void setPressed(boolean value);
 };

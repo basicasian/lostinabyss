@@ -86,14 +86,18 @@ void CameraPlayer::inputKeys(KeyInput& input, double deltaTime)
 {
     glm::vec3 dir = glm::vec3();
 
-    if (input.forward)
+    if (input.forward) {
         dir += _front;
-    if (input.backward)
+    }
+    if (input.backward) {
         dir -= _front;
-    if (input.right)
+    }
+    if (input.right) {
         dir += _right;
-    if (input.left)
+    }
+    if (input.left) {
         dir -= _right;
+    }
 
     // Remove vertical component
     dir = dir * (glm::vec3(1, 1, 1) - _worldUp);
@@ -120,9 +124,10 @@ void CameraPlayer::inputKeys(KeyInput& input, double deltaTime)
     } 
 
     // only jump if the ground is touched
-    if (input.jump && groundTouched)
+    if (input.jump && groundTouched && _isPressed == false)
     {
-        _rigidBody->applyCentralImpulse({ 0, 8 , 0 });
+        _rigidBody->applyCentralImpulse({ 0, 65, 0 });
+        _isPressed = true;
     }
 }
 
@@ -165,5 +170,11 @@ void CameraPlayer::moveTo(glm::vec3 newLocation)
     _rigidBody->setWorldTransform(transform);
     _rigidBody->activate();
     
+}
+
+
+void CameraPlayer::setPressed(boolean value) 
+{
+    _isPressed = value;
 }
 

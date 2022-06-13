@@ -465,7 +465,6 @@ int main(int argc, char** argv)
 				_ui->updateUI(fps, _gameLost, _gameWon, _timer - (t - _start), glm::vec3(0, 0, 0));
 			}
 
-
 			// bloom (fragments and render to quad) - has to be after all draw calls!
 			blurProcessor.blurFragments(blurShader.get(), bloomResultShader.get());
 
@@ -576,8 +575,12 @@ void poll_keys(GLFWwindow* window, double dt) {
 	input.backward = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
 	input.forward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
 	input.left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-	input.right = glfwGetKey(window, GLFW_KEY_D);
+	input.right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
 	input.jump = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+	
+	if (glfwGetKey(window, GLFW_KEY_SPACE) != GLFW_PRESS) {
+	 	_player.setPressed(false);
+	}
 	_player.inputKeys(input, dt);
 }
 
