@@ -6,6 +6,10 @@
 
 *Lost in Abyss* is a first-person arcade jump 'n' run game where you find yourself lost deep in a mysterious abyss with no memory of your past. Your only goal is to escape, overcoming various obstacles and managing time, or face being stuck in the depths forever. You play from a first-person perspective, navigating platforms, avoiding traps, and making your way to the surface. If the timer runs out, you’ll need to restart from the beginning.
 
+<p align="middle">
+  <img src="screenshot-lostinabyss" alt="Screenshot" width="50%"/> 
+</p>
+
 ### Controls:
 
 - **WASD**: Move character
