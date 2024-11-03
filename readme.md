@@ -1,6 +1,6 @@
 # Lost in Abyss
 
-**Authors:** Michelle Lau, Renate Zhang  
+**Creators:** Michelle Lau, Renate Zhang  
 
 ## Game Overview
 
