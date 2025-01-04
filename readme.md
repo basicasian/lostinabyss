@@ -1,6 +1,7 @@
 # Lost in Abyss
 
-**Creators:** Michelle Lau, Renate Zhang  
+**Creators:** Michelle Lau, Renate Zhang
+**Course:** Computer Graphics Exercise 2022S, TU Vienna
 
 ## Game Overview
 
