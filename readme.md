@@ -11,8 +11,8 @@
 
 <p align="middle">
   <img src="screenshot-lostinabyss.png" alt="Screenshot" width="50%"/> 
- <a href="[Screenshot game](https://youtu.be/cX8iDMq0fiw)"><img src="screenshot-lostinabyss.png" alt="Screenshot game" style="width:50%"></a>
-  
+ <a href="[Screenshot game]([https://youtu.be/cX8iDMq0fiw](https://youtu.be/cX8iDMq0fiw))"><img src="screenshot-lostinabyss.png" alt="Screenshot game" style="width:50%"></a>
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/cX8iDMq0fiw?si=nq5_sjTFUbQJsUBq" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 ### Controls:
 
 - **WASD**: Move character
