@@ -11,8 +11,7 @@
 
 <p align="middle">
   <img src="screenshot-lostinabyss.png" alt="Screenshot" width="50%"/> 
-   <iframe width="50%" src="https://www.youtube.com/embed/tgbNymZ7vqY](https://youtu.be/cX8iDMq0fiw">
-</iframe> 
+  [![Screenshot Game](screenshot-lostinabyss.png)](https://youtu.be/cX8iDMq0fiw)
 </p>
 
 ### Controls:
