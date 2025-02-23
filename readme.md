@@ -2,7 +2,7 @@
 
 **Creators:** Michelle Lau, Renate Zhang \
 **Course:** Computer Graphics Exercise 2022S, TU Vienna\
-**Executable:** https://basicasian.itch.io/lost-in-abyss 
+**Executable:** https://basicasian.itch.io/lost-in-abyss \
 **Youtube Link:** [https://basicasian.itch.io/lost-in-abyss](https://youtu.be/cX8iDMq0fiw)
 ## Game Overview
 
