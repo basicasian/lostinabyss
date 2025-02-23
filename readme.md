@@ -3,7 +3,7 @@
 **Creators:** Michelle Lau, Renate Zhang \
 **Course:** Computer Graphics Exercise 2022S, TU Vienna\
 **Executable:** https://basicasian.itch.io/lost-in-abyss \
-**Youtube Link:** [https://basicasian.itch.io/lost-in-abyss](https://youtu.be/cX8iDMq0fiw)
+**Youtube Link:** https://youtu.be/cX8iDMq0fiw
 ## Game Overview
 
 *Lost in Abyss* is a first-person arcade jump 'n' run game, created as part of the 2022SS Computer Graphics Exercise class of TU Vienna. You find yourself lost deep in a mysterious abyss with no memory of your past. The only goal is to escape, overcoming various obstacles and managing time, or face being stuck in the depths forever. You play from a first-person perspective, navigating platforms, avoiding traps, and making your way to the surface. If the timer runs out, you’ll need to restart from the beginning.
