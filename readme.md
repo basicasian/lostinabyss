@@ -11,9 +11,8 @@
 
 <p align="middle">
   <img src="screenshot-lostinabyss.png" alt="Screenshot" width="50%"/> 
-  [![Screenshot Game](screenshot-lostinabyss.png)](https://youtu.be/cX8iDMq0fiw)
-</p>
-
+ <a href="[Screenshot game](https://youtu.be/cX8iDMq0fiw)"><img src="screenshot-lostinabyss.png" alt="Screenshot game" style="width:50%"></a>
+  
 ### Controls:
 
 - **WASD**: Move character
