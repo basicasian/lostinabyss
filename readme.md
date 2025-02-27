@@ -11,6 +11,8 @@
 
 <p align="middle">
   <img src="screenshot-lostinabyss.png" alt="Screenshot" width="50%"/> 
+</p>
+
 ### Controls:
 
 - **WASD**: Move character
